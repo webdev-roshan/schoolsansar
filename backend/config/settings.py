@@ -22,6 +22,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "corsheaders",
+    "accounts",
+    "roles",
+    "profiles",
+    "organizations",
 ]
 
 MIDDLEWARE = [
@@ -87,12 +91,12 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTH_USER_MODEL = "authentication.User"
+AUTH_USER_MODEL = "accounts.User"
 
 # DRF
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "authentication.authentication.JWTCookieAuthentication",
+        "accounts.authentication.JWTCookieAuthentication",
     ),
 }
 
