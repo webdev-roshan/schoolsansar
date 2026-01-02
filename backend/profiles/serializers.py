@@ -1,148 +1,38 @@
 from rest_framework import serializers
-from .models import StudentProfile, InstructorProfile, StaffProfile, InstitutionProfile
+from .models import Profile, InstitutionProfile
+from django.db import connection
 
 
-class StudentProfileSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(source="user.email", required=False)
+class ProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
 
     class Meta:
-        model = StudentProfile
+        model = Profile
         fields = (
             "id",
-            "user",
-            "organization",
+            "user_id",
             "email",
             "first_name",
             "middle_name",
             "last_name",
-            "phone",
-            "date_of_birth",
             "gender",
+            "date_of_birth",
+            "blood_group",
+            "phone",
+            "alt_phone",
             "address",
             "profile_image",
-            "enrollment_id",
-            "current_level",
-            "section",
-            "admission_date",
-            "guardian_name",
-            "guardian_phone",
-            "guardian_email",
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("user", "organization")
-
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop("user", None)
-        if user_data and "email" in user_data:
-            new_email = user_data["email"]
-            if instance.user.email != new_email:
-                from accounts.models import User
-
-                if User.objects.filter(email=new_email).exists():
-                    raise serializers.ValidationError(
-                        {"email": "This email is already in use."}
-                    )
-                instance.user.email = new_email
-                instance.user.save()
-        return super().update(instance, validated_data)
-
-
-class InstructorProfileSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(source="user.email", required=False)
-
-    class Meta:
-        model = InstructorProfile
-        fields = (
-            "id",
-            "user",
-            "organization",
-            "email",
-            "first_name",
-            "middle_name",
-            "last_name",
-            "phone",
-            "date_of_birth",
-            "gender",
-            "address",
-            "profile_image",
-            "employee_id",
-            "specialization",
-            "qualification",
-            "years_of_experience",
-            "joining_date",
-            "created_at",
-            "updated_at",
-        )
-        read_only_fields = ("user", "organization")
-
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop("user", None)
-        if user_data and "email" in user_data:
-            new_email = user_data["email"]
-            if instance.user.email != new_email:
-                from accounts.models import User
-
-                if User.objects.filter(email=new_email).exists():
-                    raise serializers.ValidationError(
-                        {"email": "This email is already in use."}
-                    )
-                instance.user.email = new_email
-                instance.user.save()
-        return super().update(instance, validated_data)
-
-
-class StaffProfileSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(source="user.email", required=False)
-
-    class Meta:
-        model = StaffProfile
-        fields = (
-            "id",
-            "user",
-            "organization",
-            "email",
-            "first_name",
-            "middle_name",
-            "last_name",
-            "phone",
-            "date_of_birth",
-            "gender",
-            "address",
-            "profile_image",
-            "employee_id",
-            "designation",
-            "department",
-            "joining_date",
-            "created_at",
-            "updated_at",
-        )
-        read_only_fields = ("user", "organization")
-
-    def update(self, instance, validated_data):
-        user_data = validated_data.pop("user", None)
-        if user_data and "email" in user_data:
-            new_email = user_data["email"]
-            if instance.user.email != new_email:
-                from accounts.models import User
-
-                if User.objects.filter(email=new_email).exists():
-                    raise serializers.ValidationError(
-                        {"email": "This email is already in use."}
-                    )
-                instance.user.email = new_email
-                instance.user.save()
-        return super().update(instance, validated_data)
+        read_only_fields = ("id", "user_id", "email")
 
 
 class InstitutionProfileSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source="organization.name")
-    phone = serializers.CharField(
-        source="organization.phone", required=False, allow_blank=True
-    )
-    email = serializers.EmailField(
-        source="organization.email", required=False, allow_blank=True
-    )
+    # These fields come from the Organization model in the public schema
+    name = serializers.CharField(required=False)
+    phone = serializers.CharField(required=False, allow_blank=True)
+    email = serializers.EmailField(required=False, allow_blank=True)
 
     class Meta:
         model = InstitutionProfile
@@ -166,16 +56,31 @@ class InstitutionProfileSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ("id",)
 
+    def to_representation(self, instance):
+        """Add organization data to the output."""
+        data = super().to_representation(instance)
+        tenant = getattr(connection, "tenant", None)
+        if tenant:
+            data["name"] = tenant.name
+            data["phone"] = getattr(tenant, "phone", "")
+            data["email"] = getattr(tenant, "email", "")
+        return data
+
     def update(self, instance, validated_data):
-        # Handle organization field updates
-        org_data = validated_data.pop("organization", None)
-        if org_data:
-            updated_org = False
-            for field in ["name", "phone", "email"]:
-                if field in org_data:
-                    setattr(instance.organization, field, org_data[field])
+        # Extract organization-related fields
+        tenant = validated_data.pop("organization", getattr(connection, "tenant", None))
+
+        org_fields = ["name", "phone", "email"]
+        updated_org = False
+
+        for field in org_fields:
+            if field in validated_data:
+                val = validated_data.pop(field)
+                if tenant:
+                    setattr(tenant, field, val)
                     updated_org = True
-            if updated_org:
-                instance.organization.save()
+
+        if updated_org and tenant:
+            tenant.save()
 
         return super().update(instance, validated_data)

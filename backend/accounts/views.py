@@ -87,6 +87,7 @@ class MeView(APIView):
 
         data = {
             "id": user.id,
+            "email": user.email,
             "is_active": user.is_active,
             "profile": None,
             "roles": [],
@@ -131,26 +132,13 @@ class MeView(APIView):
                             )
                         )
 
-            # Fetch Profile based on active_role
-            from profiles.models import StudentProfile, InstructorProfile, StaffProfile
-            from profiles.serializers import (
-                StudentProfileSerializer,
-                InstructorProfileSerializer,
-                StaffProfileSerializer,
-            )
+            # Fetch Unified Profile
+            from profiles.models import Profile
+            from profiles.serializers import ProfileSerializer
 
-            if active_role in ["owner", "staff"]:
-                profile = StaffProfile.objects.filter(user=user).first()
-                if profile:
-                    data["profile"] = StaffProfileSerializer(profile).data
-            elif active_role == "instructor":
-                profile = InstructorProfile.objects.filter(user=user).first()
-                if profile:
-                    data["profile"] = InstructorProfileSerializer(profile).data
-            elif active_role == "student":
-                profile = StudentProfile.objects.filter(user=user).first()
-                if profile:
-                    data["profile"] = StudentProfileSerializer(profile).data
+            profile = Profile.objects.filter(user_id=user.id).first()
+            if profile:
+                data["profile"] = ProfileSerializer(profile).data
 
         return Response(data)
 

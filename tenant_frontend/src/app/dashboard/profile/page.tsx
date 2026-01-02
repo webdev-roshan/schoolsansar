@@ -64,7 +64,7 @@ export default function ProfilePage() {
     };
 
     const role = user?.roles?.[0] || "member";
-    const initials = `${formData.first_name?.[0] || ""}${formData.last_name?.[0] || ""}`.toUpperCase();
+    const initials = `${formData.first_name?.[0] || user?.email?.[0] || 'U'}${formData.last_name?.[0] || ''}`.toUpperCase();
 
     return (
         <div className="space-y-8">
@@ -78,13 +78,17 @@ export default function ProfilePage() {
 
                 <div className="hidden md:block text-white">
                     <div className="flex items-center gap-2 mb-1">
-                        <h1 className="text-2xl font-bold">{formData.first_name} {formData.last_name}</h1>
+                        <h1 className="text-2xl font-bold">
+                            {formData.first_name || formData.last_name
+                                ? `${formData.first_name || ''} ${formData.last_name || ''}`.trim()
+                                : 'New Member'}
+                        </h1>
                         <BadgeCheck className="h-5 w-5 text-sky-200" />
                     </div>
                     <div className="flex items-center gap-4 text-sky-50/80 text-sm font-medium">
                         <span className="flex items-center gap-1.5 capitalize"><ShieldCheck className="h-3.5 w-3.5" /> {role}</span>
                         <div className="h-1 w-1 rounded-full bg-white/40" />
-                        <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {profile?.email}</span>
+                        <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" /> {profile?.email || 'No email provided'}</span>
                     </div>
                 </div>
             </div>
@@ -105,12 +109,12 @@ export default function ProfilePage() {
                                 <div>
                                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Designation</p>
                                     <p className="font-bold text-slate-700 dark:text-slate-200">
-                                        {(formData as StaffProfile).designation || (role === 'student' ? 'Student' : 'Staff Member')}
+                                        {(formData as StaffProfile)?.designation || (role === 'student' ? 'Student' : 'Staff Member')}
                                     </p>
                                 </div>
                             </div>
 
-                            {((profile as StaffProfile).employee_id || (profile as StudentProfile).enrollment_id) && (
+                            {((profile as StaffProfile)?.employee_id || (profile as StudentProfile)?.enrollment_id) && (
                                 <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-4">
                                     <div className="p-3 bg-teal-100 dark:bg-teal-500/10 text-teal-600 rounded-xl">
                                         <BadgeCheck className="h-6 w-6" />
@@ -118,7 +122,7 @@ export default function ProfilePage() {
                                     <div>
                                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">ID Reference</p>
                                         <p className="font-bold text-slate-700 dark:text-slate-200">
-                                            {(profile as StaffProfile).employee_id || (profile as StudentProfile).enrollment_id}
+                                            {(profile as StaffProfile)?.employee_id || (profile as StudentProfile)?.enrollment_id}
                                         </p>
                                     </div>
                                 </div>
@@ -131,7 +135,7 @@ export default function ProfilePage() {
                                     </div>
                                     <div>
                                         <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Level</p>
-                                        <p className="font-bold text-slate-700 dark:text-slate-200">{(formData as StudentProfile).current_level || 'Not Set'}</p>
+                                        <p className="font-bold text-slate-700 dark:text-slate-200">{(formData as StudentProfile)?.current_level || 'Not Set'}</p>
                                     </div>
                                 </div>
                             )}
@@ -263,13 +267,13 @@ export default function ProfilePage() {
                                             <FloatingLabelInput
                                                 id="guardian_name"
                                                 label="Guardian's Name"
-                                                value={(formData as StudentProfile).guardian_name || ""}
+                                                value={(formData as StudentProfile)?.guardian_name || ""}
                                                 onChange={handleChange}
                                             />
                                             <FloatingLabelInput
                                                 id="guardian_phone"
                                                 label="Guardian's Phone"
-                                                value={(formData as StudentProfile).guardian_phone || ""}
+                                                value={(formData as StudentProfile)?.guardian_phone || ""}
                                                 onChange={handleChange}
                                             />
                                         </div>

@@ -5,7 +5,7 @@ __pycache__/
 
 # Environment
 .env
-*.env
+# *.env
 venv/
 env/
 .venv/
@@ -19,9 +19,9 @@ db.sqlite3-journal
 media/
 
 # Migrations
-*/migrations/*.py
-*/migrations/*.pyc
-!*/migrations/__init__.py
+# */migrations/*.py
+# */migrations/*.pyc
+# !*/migrations/__init__.py
 
 # VS Code
 .vscode/

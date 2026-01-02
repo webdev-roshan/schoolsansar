@@ -31,7 +31,12 @@ SHARED_APPS = (
     "payments",
 )
 
-TENANT_APPS = ("profiles",)
+TENANT_APPS = (
+    "profiles",
+    "students",
+    "staff",
+    "families",
+)
 
 INSTALLED_APPS = list(SHARED_APPS) + [
     app for app in TENANT_APPS if app not in SHARED_APPS
@@ -159,9 +164,11 @@ JAZZMIN_SETTINGS = {
         "organizations.Organization": "fas fa-university",
         "organizations.Domain": "fas fa-globe",
         "payments.Payment": "fas fa-credit-card",
-        "profiles.StudentProfile": "fas fa-user-graduate",
-        "profiles.InstructorProfile": "fas fa-chalkboard-teacher",
-        "profiles.StaffProfile": "fas fa-user-tie",
+        "profiles.Profile": "fas fa-user-circle",
+        "students.Student": "fas fa-user-graduate",
+        "staff.StaffMember": "fas fa-user-tie",
+        "staff.Instructor": "fas fa-chalkboard-teacher",
+        "families.Parent": "fas fa-users",
         "profiles.InstitutionProfile": "fas fa-school",
         "roles.Role": "fas fa-user-shield",
         "roles.UserRole": "fas fa-user-tag",

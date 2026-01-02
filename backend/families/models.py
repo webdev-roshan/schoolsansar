@@ -1,0 +1,57 @@
+from django.db import models, connection
+import uuid
+
+
+class Parent(models.Model):
+    """
+    Stores professional and specific demographic data for parents.
+    Personal data is stored in the linked Profile.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    profile = models.OneToOneField(
+        "profiles.Profile", on_delete=models.CASCADE, related_name="parent_record"
+    )
+
+    occupation = models.CharField(max_length=100, blank=True)
+    office_address = models.TextField(blank=True)
+    income_level = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        managed = connection.schema_name != "public"
+
+    def __str__(self):
+        return f"Parent: {self.profile.first_name}"
+
+
+class StudentParentRelation(models.Model):
+    """
+    Many-to-Many relationship table with metadata.
+    Links students to parents/guardians.
+    """
+
+    student = models.ForeignKey(
+        "students.Student", on_delete=models.CASCADE, related_name="parent_links"
+    )
+    parent = models.ForeignKey(
+        Parent, on_delete=models.CASCADE, related_name="student_links"
+    )
+
+    relation_type = models.CharField(
+        max_length=20,
+        choices=[
+            ("father", "Father"),
+            ("mother", "Mother"),
+            ("guardian", "Guardian"),
+            ("brother", "Brother"),
+            ("sister", "Sister"),
+            ("other", "Other"),
+        ],
+    )
+
+    is_primary_contact = models.BooleanField(default=False)
+    can_pickup = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ("student", "parent")
+        managed = connection.schema_name != "public"

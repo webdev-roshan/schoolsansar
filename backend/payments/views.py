@@ -13,7 +13,7 @@ from accounts.serializers import OrganizationRegisterSerializer
 class InitPaymentView(APIView):
     def post(self, request):
         data = request.data
-        amount = "5000"  # Fixed amount for now
+        amount = "5"  # Fixed amount for now
 
         # Create pending payment record
         transaction_uuid = str(uuid.uuid4())

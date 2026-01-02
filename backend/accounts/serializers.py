@@ -98,13 +98,11 @@ class OrganizationRegisterSerializer(serializers.Serializer):
             )
 
             # 6. Update the auto-created personal profile with the user's phone
-            from profiles.models import StaffProfile
+            from profiles.models import Profile
             from django_tenants.utils import tenant_context
 
             with tenant_context(organization):
-                StaffProfile.objects.filter(
-                    user=user, organization=organization
-                ).update(phone=phone)
+                Profile.objects.filter(user_id=user.id).update(phone=phone)
 
         return {
             "organization": organization,

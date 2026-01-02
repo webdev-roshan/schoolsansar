@@ -1,9 +1,18 @@
 from django.contrib import admin
+from django.db import connection
 from .models import Payment
 
 
+class GlobalOnlyAdmin(admin.ModelAdmin):
+    def has_module_permission(self, request):
+        return connection.schema_name == "public"
+
+    def has_view_permission(self, request, obj=None):
+        return connection.schema_name == "public"
+
+
 @admin.register(Payment)
-class PaymentAdmin(admin.ModelAdmin):
+class PaymentAdmin(GlobalOnlyAdmin):
     list_display = [
         "transaction_uuid",
         "organization_name",

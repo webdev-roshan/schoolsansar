@@ -3,14 +3,15 @@ from django.dispatch import receiver
 from django_tenants.utils import tenant_context
 from roles.models import UserRole
 from organizations.models import Organization
-from .models import StudentProfile, InstructorProfile, StaffProfile, InstitutionProfile
+from profiles.models import Profile, InstitutionProfile
+from django.apps import apps
 
 
 @receiver(post_save, sender=Organization)
 def create_institution_profile(sender, instance, created, **kwargs):
     if created:
         with tenant_context(instance):
-            InstitutionProfile.objects.get_or_create(organization=instance)
+            InstitutionProfile.objects.get_or_create(organization_id=instance.id)
 
 
 @receiver(post_save, sender=UserRole)
@@ -23,24 +24,42 @@ def create_profile_for_role(sender, instance, created, **kwargs):
     role_slug = instance.role.slug
 
     with tenant_context(org):
+        # 1. Ensure the 'Identity' Profile exists
+        profile, _ = Profile.objects.get_or_create(
+            user_id=user.id,
+            defaults={
+                "first_name": getattr(user, "first_name", "New"),
+                "last_name": getattr(user, "last_name", "User"),
+            },
+        )
+
+        # 2. Create Role-Specific domain data
         if role_slug == "student":
-            StudentProfile.objects.get_or_create(
-                user=user,
-                organization=org,
+            Student = apps.get_model("students", "Student")
+            Student.objects.get_or_create(
+                profile=profile,
                 defaults={"enrollment_id": f"STD-{str(user.id)[:8].upper()}"},
             )
 
         elif role_slug == "instructor":
-            InstructorProfile.objects.get_or_create(
-                user=user,
-                organization=org,
-                defaults={"employee_id": f"EMP-{str(user.id)[:8].upper()}"},
+            StaffMember = apps.get_model("staff", "StaffMember")
+            Instructor = apps.get_model("staff", "Instructor")
+
+            staff, _ = StaffMember.objects.get_or_create(
+                profile=profile,
+                defaults={
+                    "employee_id": f"EMP-{str(user.id)[:8].upper()}",
+                    "designation": "Instructor",
+                },
+            )
+            Instructor.objects.get_or_create(
+                staff_member=staff, defaults={"specialization": "General"}
             )
 
         elif role_slug == "staff" or role_slug == "owner":
-            StaffProfile.objects.get_or_create(
-                user=user,
-                organization=org,
+            StaffMember = apps.get_model("staff", "StaffMember")
+            StaffMember.objects.get_or_create(
+                profile=profile,
                 defaults={
                     "employee_id": f"EMP-{str(user.id)[:8].upper()}",
                     "designation": (

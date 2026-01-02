@@ -1,107 +1,71 @@
-from django.db import models
+from django.db import models, connection
 from django.conf import settings
 import uuid
 
-User = settings.AUTH_USER_MODEL
 
+class Profile(models.Model):
+    """
+    Identity Layer: Stores 'Human' data.
+    Uses 'Soft Links' (UUIDs) for cross-schema relationships to
+    ensure total data isolation and prevent Admin crashes.
+    """
 
-class BaseProfile(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="%(class)ss",  # Auto becomes studentprofiles, instructorprofiles, staffprofiles
-    )
+    # SOFT LINK: Store the UUID of the User from the public schema
+    # We don't use a ForeignKey here to prevent Cross-Schema integrity issues
+    user_id = models.UUIDField(db_index=True, null=True, blank=True)
 
-    organization = models.ForeignKey(
-        "organizations.Organization",
-        on_delete=models.CASCADE,
-        related_name="%(class)ss",  # Auto becomes studentprofiles, instructorprofiles, staffprofiles
-    )
-
+    # Personal Information
     first_name = models.CharField(max_length=50)
     middle_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50)
 
-    phone = models.CharField(max_length=20, blank=True)
-    date_of_birth = models.DateField(null=True, blank=True)
-
     gender = models.CharField(
         max_length=10,
-        choices=[
-            ("male", "Male"),
-            ("female", "Female"),
-            ("other", "Other"),
-        ],
+        choices=[("male", "Male"), ("female", "Female"), ("other", "Other")],
         blank=True,
     )
+    date_of_birth = models.DateField(null=True, blank=True)
+    blood_group = models.CharField(max_length=5, blank=True)
 
+    # Contact Information
+    phone = models.CharField(max_length=20, blank=True)
+    alt_phone = models.CharField(max_length=20, blank=True)
     address = models.TextField(blank=True)
-    profile_image = models.ImageField(upload_to="profiles/", null=True, blank=True)
+
+    profile_image = models.ImageField(
+        upload_to="profiles/photos/", null=True, blank=True
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        abstract = True
-
-
-class StudentProfile(BaseProfile):
-    enrollment_id = models.CharField(max_length=50)
-    current_level = models.CharField(max_length=50)
-    section = models.CharField(max_length=10, blank=True)
-
-    admission_date = models.DateField(null=True, blank=True)
-
-    guardian_name = models.CharField(max_length=100, blank=True)
-    guardian_phone = models.CharField(max_length=20, blank=True)
-    guardian_email = models.EmailField(blank=True)
-
-    class Meta:
-        unique_together = ("organization", "enrollment_id")
-        verbose_name_plural = "Student Profiles"
+        verbose_name = "Profile"
+        verbose_name_plural = "Profiles"
 
     def __str__(self):
-        return f"Student: {self.user.email}"
+        return f"{self.first_name} {self.last_name}"
 
+    @property
+    def user(self):
+        """Helper to fetch the global User object manually."""
+        from accounts.models import User
 
-class InstructorProfile(BaseProfile):
-    employee_id = models.CharField(max_length=50)
-    specialization = models.CharField(max_length=100)
-    qualification = models.CharField(max_length=100, blank=True)
-    years_of_experience = models.PositiveIntegerField(default=0)
-    joining_date = models.DateField(null=True, blank=True)
-
-    class Meta:
-        unique_together = ("organization", "employee_id")
-        verbose_name_plural = "Instructor Profiles"
-
-    def __str__(self):
-        return f"Instructor: {self.user.email}"
-
-
-class StaffProfile(BaseProfile):
-    employee_id = models.CharField(max_length=50)
-    designation = models.CharField(max_length=100)
-    department = models.CharField(max_length=100, blank=True)
-    joining_date = models.DateField(null=True, blank=True)
-
-    class Meta:
-        unique_together = ("organization", "employee_id")
-        verbose_name_plural = "Staff Profiles"
-
-    def __str__(self):
-        return f"Staff: {self.user.email}"
+        return User.objects.filter(id=self.user_id).first()
 
 
 class InstitutionProfile(models.Model):
+    """
+    Stores institutional branding. Also uses a Soft Link to the Organization.
+    """
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    organization = models.OneToOneField(
-        "organizations.Organization",
-        on_delete=models.CASCADE,
-        related_name="institution_profile",
-    )
+
+    # SOFT LINK to the organization ID
+    organization_id = models.UUIDField(unique=True, null=True, blank=True)
+
     logo = models.ImageField(upload_to="institution/logos/", null=True, blank=True)
     banner = models.ImageField(upload_to="institution/banners/", null=True, blank=True)
     tagline = models.CharField(max_length=255, blank=True)
@@ -120,5 +84,9 @@ class InstitutionProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    class Meta:
+        verbose_name = "Institution Profile"
+        verbose_name_plural = "Institution Profiles"
+
     def __str__(self):
-        return f"Institution: {self.organization.name}"
+        return f"Institution Details ({self.organization_id})"

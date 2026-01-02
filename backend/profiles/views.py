@@ -2,62 +2,46 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from .models import StudentProfile, InstructorProfile, StaffProfile, InstitutionProfile
-from .serializers import (
-    StudentProfileSerializer,
-    InstructorProfileSerializer,
-    StaffProfileSerializer,
-    InstitutionProfileSerializer,
-)
+from .models import Profile, InstitutionProfile
+from .serializers import ProfileSerializer, InstitutionProfileSerializer
 from django.db import connection
 
 
 class MyProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_profile_object(self, user):
-        # In a tenant context, 'connection.tenant' should be set by django-tenants middleware
+    def get_object(self, user):
         tenant = getattr(connection, "tenant", None)
         if not tenant:
-            return None, None
-
-        # Check Staff first
-        profile = StaffProfile.objects.filter(user=user, organization=tenant).first()
-        if profile:
-            return profile, StaffProfileSerializer
-
-        # Then Instructor
-        profile = InstructorProfile.objects.filter(
-            user=user, organization=tenant
-        ).first()
-        if profile:
-            return profile, InstructorProfileSerializer
-
-        # Then Student
-        profile = StudentProfile.objects.filter(user=user, organization=tenant).first()
-        if profile:
-            return profile, StudentProfileSerializer
-
-        return None, None
+            return None
+        return Profile.objects.filter(user_id=user.id).first()
 
     def get(self, request):
-        profile, serializer_class = self.get_profile_object(request.user)
-        if not profile:
-            return Response(
-                {"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+        tenant = getattr(connection, "tenant", None)
+        if not tenant:
+            return Response({"error": "No tenant context"}, status=400)
 
-        serializer = serializer_class(profile)
+        profile, created = Profile.objects.get_or_create(
+            user_id=request.user.id,
+            defaults={
+                "first_name": getattr(request.user, "first_name", "New"),
+                "last_name": getattr(request.user, "last_name", "User"),
+            },
+        )
+
+        serializer = ProfileSerializer(profile)
         return Response(serializer.data)
 
     def patch(self, request):
-        profile, serializer_class = self.get_profile_object(request.user)
-        if not profile:
-            return Response(
-                {"error": "Profile not found"}, status=status.HTTP_404_NOT_FOUND
-            )
+        tenant = getattr(connection, "tenant", None)
+        if not tenant:
+            return Response({"error": "No tenant context"}, status=400)
 
-        serializer = serializer_class(profile, data=request.data, partial=True)
+        profile, _ = Profile.objects.get_or_create(
+            user_id=request.user.id, defaults={"first_name": "New", "last_name": "User"}
+        )
+
+        serializer = ProfileSerializer(profile, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -76,7 +60,7 @@ class InstitutionProfileView(APIView):
 
     def get_object(self):
         tenant = getattr(connection, "tenant", None)
-        return InstitutionProfile.objects.filter(organization=tenant).first()
+        return InstitutionProfile.objects.filter(organization_id=tenant.id).first()
 
     def get(self, request):
         profile = self.get_object()
@@ -100,6 +84,8 @@ class InstitutionProfileView(APIView):
             profile, data=request.data, partial=True
         )
         if serializer.is_valid():
-            serializer.save()
+            # Soft-link update
+            tenant = getattr(connection, "tenant", None)
+            serializer.save(organization=tenant)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
