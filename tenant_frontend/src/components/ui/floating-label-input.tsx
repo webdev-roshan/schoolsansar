@@ -38,16 +38,23 @@ const FloatingLabel = React.forwardRef<
 });
 FloatingLabel.displayName = "FloatingLabel";
 
-type FloatingLabelInputProps = InputProps & { label?: string };
+type FloatingLabelInputProps = InputProps & { label?: string; error?: string };
 
 const FloatingLabelInput = React.forwardRef<
     React.ElementRef<typeof FloatingInput>,
     React.PropsWithoutRef<FloatingLabelInputProps>
->(({ id, label, ...props }, ref) => {
+>(({ id, label, error, ...props }, ref) => {
     return (
-        <div className="relative">
-            <FloatingInput ref={ref} id={id} {...props} />
-            <FloatingLabel htmlFor={id}>{label}</FloatingLabel>
+        <div className="space-y-1">
+            <div className="relative">
+                <FloatingInput ref={ref} id={id} {...props} />
+                <FloatingLabel htmlFor={id}>{label}</FloatingLabel>
+            </div>
+            {error && (
+                <p className="text-xs font-semibold text-red-500 animate-in fade-in slide-in-from-top-1 px-1">
+                    {error}
+                </p>
+            )}
         </div>
     );
 });

@@ -44,11 +44,6 @@ export const getMenuItems = (user: any, can: (permission: string) => boolean): S
                 }
             ]
         },
-        {
-            label: "User Profile",
-            icon: UserCircle,
-            href: "/dashboard/profile"
-        },
     ];
 
     // 2. Institution Management Section (Permission Protected)

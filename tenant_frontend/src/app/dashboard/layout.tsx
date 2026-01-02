@@ -45,7 +45,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {/* Main Content Area */}
                 <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
                     {/* Header */}
-                    <header className="h-20 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 lg:px-10 z-10 transition-all duration-300">
+                    <header className="h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 flex items-center justify-between p-6 z-10 transition-all duration-300">
                         <div className="flex items-center gap-4">
                             <button
                                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
@@ -66,8 +66,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </header>
 
                     {/* Main Content Container */}
-                    <main className="flex-1 overflow-y-auto bg-[#F8FAFC] dark:bg-slate-950 p-6 lg:p-10 transition-all duration-300">
-                        <div className="max-w-7xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <main className="flex-1 overflow-y-auto bg-[#F8FAFC] dark:bg-slate-950 p-6 transition-all duration-300">
+                        <div className="max-w-9xl mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
                             {children}
                         </div>
                     </main>
