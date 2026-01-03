@@ -7,13 +7,6 @@ from profiles.models import Profile, InstitutionProfile
 from django.apps import apps
 
 
-@receiver(post_save, sender=Organization)
-def create_institution_profile(sender, instance, created, **kwargs):
-    if created:
-        with tenant_context(instance):
-            InstitutionProfile.objects.get_or_create(organization_id=instance.id)
-
-
 @receiver(post_save, sender=UserRole)
 def create_profile_for_role(sender, instance, created, **kwargs):
     if not created or not instance.is_active:
@@ -24,6 +17,9 @@ def create_profile_for_role(sender, instance, created, **kwargs):
     role_slug = instance.role.slug
 
     with tenant_context(org):
+        # 0. Ensure InstitutionProfile exists
+        InstitutionProfile.objects.get_or_create(organization_id=org.id)
+
         # 1. Ensure the 'Identity' Profile exists
         profile, _ = Profile.objects.get_or_create(
             user_id=user.id,

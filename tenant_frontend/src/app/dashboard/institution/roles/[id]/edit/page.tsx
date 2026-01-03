@@ -18,7 +18,7 @@ export default function EditRolePage() {
     const router = useRouter();
 
     const role = roles?.find((r) => r.id === id);
-    const canEdit = isOwner || can("edit_role");
+    const canEdit = isOwner || can("change_role");
 
     if (isRolesLoading || isPermissionsLoading) {
         return (

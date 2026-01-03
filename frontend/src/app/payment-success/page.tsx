@@ -34,7 +34,7 @@ export default function PaymentSuccessPage() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 via-teal-50 to-green-50 p-4">
+        <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-blue-50 via-teal-50 to-green-50 p-4">
             <Card className="w-full max-w-lg border-slate-200 shadow-2xl">
                 <CardHeader className="text-center space-y-4 pb-6">
                     <div className="flex justify-center">
@@ -80,7 +80,7 @@ export default function PaymentSuccessPage() {
                         <div className="space-y-4">
                             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                                 <div className="flex items-start gap-3">
-                                    <Loader2 className="h-5 w-5 text-blue-600 mt-0.5 animate-spin flex-shrink-0" />
+                                    <Loader2 className="h-5 w-5 text-blue-600 mt-0.5 animate-spin shrink-0" />
                                     <div className="text-sm text-blue-900 space-y-2">
                                         <p className="font-semibold">Setting up your institution...</p>
                                         <ul className="space-y-1 text-blue-700">
@@ -105,7 +105,7 @@ export default function PaymentSuccessPage() {
 
                     {isSuccess && (
                         <div className="space-y-4">
-                            <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-200">
+                            <div className="bg-linear-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-200">
                                 <div className="space-y-3">
                                     <div className="flex items-center gap-2 text-green-800">
                                         <CheckCircle className="h-5 w-5" />
@@ -134,7 +134,7 @@ export default function PaymentSuccessPage() {
 
                             <Button
                                 onClick={handleManualRedirect}
-                                className="w-full h-12 bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+                                className="w-full h-12 bg-linear-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                             >
                                 Go to Login Now
                                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -146,11 +146,11 @@ export default function PaymentSuccessPage() {
                         <div className="space-y-4">
                             <div className="bg-red-50 p-5 rounded-lg border-2 border-red-200">
                                 <div className="flex items-start gap-3">
-                                    <XCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                                    <XCircle className="h-5 w-5 text-red-600 mt-0.5 shrink-0" />
                                     <div className="text-sm text-red-900">
                                         <p className="font-semibold mb-2">Verification Failed</p>
                                         <p className="text-red-700">
-                                            {error.message || "An unexpected error occurred during payment verification."}
+                                            {(error as any)?.response?.data?.error || (error as any)?.response?.data?.message || error.message || "An unexpected error occurred during payment verification."}
                                         </p>
                                     </div>
                                 </div>
@@ -160,15 +160,15 @@ export default function PaymentSuccessPage() {
                                 <p className="text-sm text-slate-700 mb-3 font-medium">What to do next:</p>
                                 <ul className="space-y-2 text-sm text-slate-600">
                                     <li className="flex items-start gap-2">
-                                        <div className="h-1.5 w-1.5 rounded-full bg-slate-400 mt-1.5 flex-shrink-0"></div>
+                                        <div className="h-1.5 w-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0"></div>
                                         <span>Check your email for transaction details</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <div className="h-1.5 w-1.5 rounded-full bg-slate-400 mt-1.5 flex-shrink-0"></div>
+                                        <div className="h-1.5 w-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0"></div>
                                         <span>Contact our support team with your transaction ID</span>
                                     </li>
                                     <li className="flex items-start gap-2">
-                                        <div className="h-1.5 w-1.5 rounded-full bg-slate-400 mt-1.5 flex-shrink-0"></div>
+                                        <div className="h-1.5 w-1.5 rounded-full bg-slate-400 mt-1.5 shrink-0"></div>
                                         <span>Email: support@edusekai.com</span>
                                     </li>
                                 </ul>

@@ -18,35 +18,46 @@ export const getMenuItems = (user: any, can: (permission: string) => boolean): S
             label: "Dashboard",
             icon: LayoutDashboard,
             href: "/dashboard"
-        },
-        {
-            label: "Academic Management",
-            icon: GraduationCap,
-            children: [
-                {
-                    label: "Students",
-                    icon: Users,
-                    href: "/dashboard/students",
-                    children: [
-                        { label: "Active Students", href: "/dashboard/students/active" },
-                        { label: "Admissions", href: "/dashboard/students/admissions" },
-                    ]
-                },
-                {
-                    label: "Courses",
-                    icon: BookOpen,
-                    href: "/dashboard/courses"
-                },
-                {
-                    label: "Examinations",
-                    icon: FileText,
-                    href: "/dashboard/exams"
-                }
-            ]
-        },
+        }
     ];
 
-    // 2. Institution Management Section (Permission Protected)
+    // 2. Academic Management (Permission Protected)
+    const academicChildren: SidebarItemType[] = [];
+
+    if (can("view_student")) {
+        academicChildren.push({
+            label: "Students",
+            icon: Users,
+            href: "/dashboard/students",
+            children: [
+                { label: "Active Students", href: "/dashboard/students" },
+                { label: "Admissions", href: "/dashboard/students/admissions" },
+            ]
+        });
+    }
+
+    // Courses and Exams currently use placeholders or will need permissions later
+    academicChildren.push({
+        label: "Courses",
+        icon: BookOpen,
+        href: "/dashboard/courses"
+    });
+
+    academicChildren.push({
+        label: "Examinations",
+        icon: FileText,
+        href: "/dashboard/exams"
+    });
+
+    if (academicChildren.length > 0) {
+        menuItems.push({
+            label: "Academic Management",
+            icon: GraduationCap,
+            children: academicChildren
+        });
+    }
+
+    // 3. Institution Management Section (Permission Protected)
     const institutionChildren: SidebarItemType[] = [];
 
     if (can("view_institution_profile")) {
@@ -57,21 +68,11 @@ export const getMenuItems = (user: any, can: (permission: string) => boolean): S
         });
     }
 
-    // "Staff Directory" currently has no permission, allowing for now if staff/owner
-    // ideally we should add view_staff permission later.
-    const isManagement = user?.active_role === "owner" || user?.active_role === "staff";
-    if (isManagement) {
+    if (can("view_staff")) {
         institutionChildren.push({
             label: "Staff Directory",
             icon: Users,
             href: "/dashboard/institution/staff"
-        });
-
-        // Security or other catch-all
-        institutionChildren.push({
-            label: "Security",
-            icon: Shield,
-            href: "/dashboard/institution/security"
         });
     }
 
@@ -80,6 +81,14 @@ export const getMenuItems = (user: any, can: (permission: string) => boolean): S
             label: "Roles & Permissions",
             icon: Shield,
             href: "/dashboard/institution/roles"
+        });
+    }
+
+    if (can("view_family")) {
+        institutionChildren.push({
+            label: "Family Portal",
+            icon: Users,
+            href: "/dashboard/institution/families"
         });
     }
 

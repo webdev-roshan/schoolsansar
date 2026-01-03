@@ -1,0 +1,133 @@
+EduSekai_backend  | Waiting for postgres...
+EduSekai_backend  | Connection to db (172.21.0.2) 5432 port [tcp/postgresql] succeeded!
+EduSekai_backend  | PostgreSQL started
+EduSekai_backend  | Cleaning old migration files...
+EduSekai_backend  | Generating fresh migrations for all apps...
+EduSekai_backend  | Migrations for 'organizations':
+EduSekai_backend  |   organizations/migrations/0001_initial.py
+EduSekai_backend  |     + Create model Organization
+EduSekai_backend  |     + Create model Domain
+EduSekai_backend  | Migrations for 'payments':
+EduSekai_backend  |   payments/migrations/0001_initial.py
+EduSekai_backend  |     + Create model Payment
+EduSekai_backend  | Migrations for 'profiles':
+EduSekai_backend  |   profiles/migrations/0001_initial.py
+EduSekai_backend  |     + Create model InstitutionProfile
+EduSekai_backend  |     + Create model Profile
+EduSekai_backend  | Migrations for 'staff':
+EduSekai_backend  |   staff/migrations/0001_initial.py
+EduSekai_backend  |     + Create model StaffMember
+EduSekai_backend  |     + Create model Instructor
+EduSekai_backend  | Migrations for 'students':
+EduSekai_backend  |   students/migrations/0001_initial.py
+EduSekai_backend  |     + Create model Student
+EduSekai_backend  |     + Create model AcademicHistory
+EduSekai_backend  |     + Create model StudentLevel
+EduSekai_backend  | Migrations for 'families':
+EduSekai_backend  |   families/migrations/0001_initial.py
+EduSekai_backend  |     + Create model Parent
+EduSekai_backend  |     + Create model StudentParentRelation
+EduSekai_backend  | Migrations for 'accounts':
+EduSekai_backend  |   accounts/migrations/0001_initial.py
+EduSekai_backend  |     + Create model User
+EduSekai_backend  | Migrations for 'roles':
+EduSekai_backend  |   roles/migrations/0001_initial.py
+EduSekai_backend  |     + Create model Permission
+EduSekai_backend  |     + Create model Role
+EduSekai_backend  |     + Create model UserRole
+EduSekai_backend  | Syncing SHARED apps...
+EduSekai_backend  | usage: manage.py migrate_schemas [-h] [--tenant] [--shared] [-s SCHEMA_NAME]
+EduSekai_backend  |                                  [--executor EXECUTOR] [--noinput]
+EduSekai_backend  |                                  [--no-initial-data] [--database DATABASE]
+EduSekai_backend  |                                  [--fake] [--fake-initial] [--list] [--plan]
+EduSekai_backend  |                                  [--prune] [--run-syncdb] [--check]
+EduSekai_backend  |                                  [--version] [-v {0,1,2,3}]
+EduSekai_backend  |                                  [--settings SETTINGS]
+EduSekai_backend  |                                  [--pythonpath PYTHONPATH] [--traceback]
+EduSekai_backend  |                                  [--no-color] [--force-color] [--skip-checks]
+EduSekai_backend  |                                  [app_label] [migration_name]
+EduSekai_backend  | manage.py migrate_schemas: error: unrecognized arguments: --no-input
+EduSekai_backend  | Syncing TENANT apps (Initial & Catch-up)...
+EduSekai_backend  | usage: manage.py migrate_schemas [-h] [--tenant] [--shared] [-s SCHEMA_NAME]
+EduSekai_backend  |                                  [--executor EXECUTOR] [--noinput]
+EduSekai_backend  |                                  [--no-initial-data] [--database DATABASE]
+EduSekai_backend  |                                  [--fake] [--fake-initial] [--list] [--plan]
+EduSekai_backend  |                                  [--prune] [--run-syncdb] [--check]
+EduSekai_backend  |                                  [--version] [-v {0,1,2,3}]
+EduSekai_backend  |                                  [--settings SETTINGS]
+EduSekai_backend  |                                  [--pythonpath PYTHONPATH] [--traceback]
+EduSekai_backend  |                                  [--no-color] [--force-color] [--skip-checks]
+EduSekai_backend  |                                  [app_label] [migration_name]
+EduSekai_backend  | manage.py migrate_schemas: error: unrecognized arguments: --no-input
+EduSekai_backend  | Seeding public tenant...
+EduSekai_backend  | Checking for public tenant...
+EduSekai_backend  | Traceback (most recent call last):
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+EduSekai_backend  |     return self.cursor.execute(sql, params)
+EduSekai_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EduSekai_backend  | psycopg2.errors.UndefinedTable: relation "organizations_organization" does not exist
+EduSekai_backend  | LINE 1: ...", "organizations_organization"."updated_at" FROM "organizat...
+EduSekai_backend  |                                                              ^
+EduSekai_backend  | 
+EduSekai_backend  | 
+EduSekai_backend  | The above exception was the direct cause of the following exception:
+EduSekai_backend  | 
+EduSekai_backend  | Traceback (most recent call last):
+EduSekai_backend  |   File "/app/seed_public.py", line 61, in <module>
+EduSekai_backend  |     create_public_tenant()
+EduSekai_backend  |   File "/app/seed_public.py", line 20, in create_public_tenant
+EduSekai_backend  |     public_tenant, created = Organization.objects.get_or_create(
+EduSekai_backend  |                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/models/manager.py", line 87, in manager_method
+EduSekai_backend  |     return getattr(self.get_queryset(), name)(*args, **kwargs)
+EduSekai_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 948, in get_or_create
+EduSekai_backend  |     return self.get(**kwargs), False
+EduSekai_backend  |            ^^^^^^^^^^^^^^^^^^
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 631, in get
+EduSekai_backend  |     num = len(clone)
+EduSekai_backend  |           ^^^^^^^^^^
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 368, in __len__
+EduSekai_backend  |     self._fetch_all()
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 1954, in _fetch_all
+EduSekai_backend  |     self._result_cache = list(self._iterable_class(self))
+EduSekai_backend  |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/models/query.py", line 93, in __iter__
+EduSekai_backend  |     results = compiler.execute_sql(
+EduSekai_backend  |               ^^^^^^^^^^^^^^^^^^^^^
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/models/sql/compiler.py", line 1623, in execute_sql
+EduSekai_backend  |     cursor.execute(sql, params)
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 122, in execute
+EduSekai_backend  |     return super().execute(sql, params)
+EduSekai_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 79, in execute
+EduSekai_backend  |     return self._execute_with_wrappers(
+EduSekai_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+EduSekai_backend  |     return executor(sql, params, many, context)
+EduSekai_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 100, in _execute
+EduSekai_backend  |     with self.db.wrap_database_errors:
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/utils.py", line 91, in __exit__
+EduSekai_backend  |     raise dj_exc_value.with_traceback(traceback) from exc_value
+EduSekai_backend  |   File "/usr/local/lib/python3.11/site-packages/django/db/backends/utils.py", line 105, in _execute
+EduSekai_backend  |     return self.cursor.execute(sql, params)
+EduSekai_backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EduSekai_backend  | django.db.utils.ProgrammingError: relation "organizations_organization" does not exist
+EduSekai_backend  | LINE 1: ...", "organizations_organization"."updated_at" FROM "organizat...
+EduSekai_backend  |                                                              ^
+EduSekai_backend  | 
+EduSekai_backend  | Watching for file changes with StatReloader
+EduSekai_backend  | Performing system checks...
+EduSekai_backend  | 
+EduSekai_backend  | System check identified no issues (0 silenced).
+EduSekai_backend  | 
+EduSekai_backend  | You have 26 unapplied migration(s). Your project may not work properly until you apply the migrations for app(s): accounts, admin, auth, contenttypes, families, organizations, payments, profiles, roles, sessions, staff, students.
+EduSekai_backend  | Run 'python manage.py migrate' to apply them.
+EduSekai_backend  | January 03, 2026 - 15:48:12
+EduSekai_backend  | Django version 5.2.9, using settings 'config.settings'
+EduSekai_backend  | Starting development server at http://0.0.0.0:8000/
+EduSekai_backend  | Quit the server with CONTROL-C.
+EduSekai_backend  | 
+EduSekai_backend  | WARNING: This is a development server. Do not use it in a production setting. Use a production WSGI or ASGI server instead.
+EduSekai_backend  | For more information on production servers see: https://docs.djangoproject.com/en/5.2/howto/deployment/

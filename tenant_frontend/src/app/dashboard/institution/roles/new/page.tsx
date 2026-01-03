@@ -14,7 +14,7 @@ export default function CreateRolePage() {
     const { mutate: createRole, isPending } = useCreateRole();
     const router = useRouter();
 
-    const canCreate = isOwner || can("create_role");
+    const canCreate = isOwner || can("add_role");
 
     if (isLoading) {
         return (

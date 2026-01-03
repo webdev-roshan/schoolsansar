@@ -55,7 +55,7 @@ class InstitutionProfileView(APIView):
         if self.request.method == "GET":
             return [IsAuthenticated(), HasPermission("view_institution_profile")]
         elif self.request.method == "PATCH":
-            return [IsAuthenticated(), HasPermission("edit_institution_profile")]
+            return [IsAuthenticated(), HasPermission("change_institution_profile")]
         return [IsAuthenticated()]
 
     def get_object(self):

@@ -1,4 +1,4 @@
-from django.db import models, connection
+from django.db import models
 import uuid
 
 
@@ -16,9 +16,6 @@ class Parent(models.Model):
     occupation = models.CharField(max_length=100, blank=True)
     office_address = models.TextField(blank=True)
     income_level = models.CharField(max_length=50, blank=True)
-
-    class Meta:
-        managed = connection.schema_name != "public"
 
     def __str__(self):
         return f"Parent: {self.profile.first_name}"
@@ -54,4 +51,3 @@ class StudentParentRelation(models.Model):
 
     class Meta:
         unique_together = ("student", "parent")
-        managed = connection.schema_name != "public"

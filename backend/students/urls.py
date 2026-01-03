@@ -1,12 +1,7 @@
-from django.urls import path, include
-from rest_framework.routers import DefaultRouter
-from .views import StudentViewSet, AcademicHistoryViewSet, StudentLevelViewSet
-
-router = DefaultRouter()
-router.register(r"records", StudentViewSet)
-router.register(r"history", AcademicHistoryViewSet)
-router.register(r"levels", StudentLevelViewSet)
+from django.urls import path
+from .views import StudentEnrollmentView, StudentListView
 
 urlpatterns = [
-    path("", include(router.urls)),
+    path("enroll/", StudentEnrollmentView.as_view(), name="student-enroll"),
+    path("list/", StudentListView.as_view(), name="student-list"),
 ]

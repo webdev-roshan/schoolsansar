@@ -1,0 +1,58 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axiosInstance from "@/lib/axios";
+import { toast } from "sonner";
+
+export interface StudentEnrollmentData {
+    first_name: string;
+    middle_name?: string;
+    last_name: string;
+    email?: string;
+    gender: 'male' | 'female' | 'other';
+    date_of_birth: string;
+    phone?: string;
+    address?: string;
+    level: string;
+    section?: string;
+    academic_year: string;
+    admission_date?: string;
+    previous_school?: string;
+    last_grade_passed?: string;
+    parents?: Array<{
+        first_name: string;
+        last_name: string;
+        phone: string;
+        gender: string;
+        occupation?: string;
+        relation: string;
+        is_primary: boolean;
+    }>;
+}
+
+export const useEnrollStudent = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: StudentEnrollmentData) => {
+            const response = await axiosInstance.post("/students/enroll/", data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["students"] });
+            toast.success("Student enrolled successfully!");
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.message || "Failed to enroll student";
+            toast.error(message);
+        }
+    });
+};
+
+export const useStudents = () => {
+    return useQuery({
+        queryKey: ["students"],
+        queryFn: async () => {
+            const response = await axiosInstance.get("/students/list/");
+            return response.data;
+        }
+    });
+};

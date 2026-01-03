@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2, GraduationCap, CheckCircle, Shield, Zap, Users } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 import { useInitPayment, useVerifyEmail, useCheckDomain } from "@/hooks/payments";
 import { Button } from "@/components/ui/button";
@@ -41,12 +42,23 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function GetStartedPage() {
+import { Suspense } from "react";
+
+function GetStartedContent() {
     const router = useRouter();
     const [step, setStep] = useState<"form" | "payment">("form");
     const [formData, setFormData] = useState<FormValues | null>(null);
     const [paymentData, setPaymentData] = useState<any>(null);
     const [isChecking, setIsChecking] = useState(false);
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        if (searchParams.get("status") === "failed" || searchParams.get("payment") === "failed") {
+            toast.error("Payment was cancelled or failed. Please try again.");
+            // Reset to form step if it was on payment
+            setStep("form");
+        }
+    }, [searchParams]);
 
     const { mutateAsync: initPayment } = useInitPayment();
     const { mutateAsync: verifyEmail } = useVerifyEmail();
@@ -119,7 +131,7 @@ export default function GetStartedPage() {
             product_service_charge: '0',
             product_delivery_charge: '0',
             success_url: `${window.location.origin}/payment-success`,
-            failure_url: `${window.location.origin}/get-started`,
+            failure_url: `${window.location.origin}/get-started?payment=failed`,
             signed_field_names: 'total_amount,transaction_uuid,product_code',
             signature: paymentData.signature,
         };
@@ -213,7 +225,7 @@ export default function GetStartedPage() {
                     <CardHeader className="space-y-3 pb-6">
                         <div className="lg:hidden flex items-center gap-2 mb-4">
                             <GraduationCap className="h-8 w-8 text-blue-600" />
-                            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">Edu Sekai</span>
+                            <span className="text-2xl font-bold bg-linear-to-r from-blue-600 to-teal-600 bg-clip-text text-transparent">Edu Sekai</span>
                         </div>
                         <CardTitle className="text-2xl font-bold text-slate-900">
                             {step === "form" ? "Create Your Institution Account" : "Complete Your Payment"}
@@ -309,7 +321,7 @@ export default function GetStartedPage() {
 
                                     <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                                         <div className="flex items-start gap-3">
-                                            <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                                            <CheckCircle className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
                                             <div className="text-sm text-blue-900">
                                                 <p className="font-semibold mb-1">30-Day Free Trial Included</p>
                                                 <p className="text-blue-700">No credit card required. Full access to all features.</p>
@@ -319,7 +331,7 @@ export default function GetStartedPage() {
 
                                     <Button
                                         type="submit"
-                                        className="w-full h-12 text-base font-semibold bg-gradient-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
+                                        className="w-full h-12 text-base font-semibold bg-linear-to-r from-blue-600 to-teal-600 hover:from-blue-700 hover:to-teal-700"
                                         disabled={isChecking}
                                     >
                                         {isChecking ? (
@@ -339,11 +351,11 @@ export default function GetStartedPage() {
                             </Form>
                         ) : (
                             <div className="space-y-6">
-                                <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-200">
+                                <div className="bg-linear-to-br from-green-50 to-emerald-50 p-6 rounded-xl border-2 border-green-200">
                                     <div className="flex items-center justify-between mb-4">
                                         <div>
                                             <p className="text-sm font-medium text-green-700 mb-1">One-Time Payment</p>
-                                            <p className="text-4xl font-bold text-green-900">Rs. 5,000</p>
+                                            <p className="text-4xl font-bold text-green-900">Rs. 500</p>
                                         </div>
                                         <div className="text-right">
                                             <div className="inline-block bg-green-600 text-white px-4 py-2 rounded-full text-sm font-bold">
@@ -376,7 +388,7 @@ export default function GetStartedPage() {
                                 </div>
 
                                 <Button
-                                    className="w-full h-12 text-base font-semibold bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                                    className="w-full h-12 text-base font-semibold bg-linear-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                                     onClick={handleEsewaPayment}
                                     disabled={isChecking}
                                 >
@@ -412,5 +424,17 @@ export default function GetStartedPage() {
                 </Card>
             </div>
         </div>
+    );
+}
+
+export default function GetStartedPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex min-h-screen items-center justify-center bg-slate-50">
+                <Loader2 className="h-10 w-10 animate-spin text-blue-600" />
+            </div>
+        }>
+            <GetStartedContent />
+        </Suspense>
     );
 }

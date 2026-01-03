@@ -1,4 +1,4 @@
-from django.db import models, connection
+from django.db import models
 import uuid
 
 
@@ -29,9 +29,6 @@ class Student(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
-        managed = connection.schema_name != "public"
-
     def __str__(self):
         return f"{self.profile.first_name} - {self.enrollment_id}"
 
@@ -51,7 +48,6 @@ class AcademicHistory(models.Model):
 
     class Meta:
         verbose_name_plural = "Academic Histories"
-        managed = connection.schema_name != "public"
 
 
 class StudentLevel(models.Model):
@@ -69,4 +65,3 @@ class StudentLevel(models.Model):
 
     class Meta:
         unique_together = ("student", "academic_year")
-        managed = connection.schema_name != "public"

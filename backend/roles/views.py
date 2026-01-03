@@ -16,9 +16,9 @@ class RoleViewSet(viewsets.ModelViewSet):
         if self.action in ["list", "retrieve"]:
             base_permissions.append(HasPermission("view_role"))
         elif self.action == "create":
-            base_permissions.append(HasPermission("create_role"))
+            base_permissions.append(HasPermission("add_role"))
         elif self.action in ["update", "partial_update"]:
-            base_permissions.append(HasPermission("edit_role"))
+            base_permissions.append(HasPermission("change_role"))
         elif self.action == "destroy":
             base_permissions.append(HasPermission("delete_role"))
         return base_permissions

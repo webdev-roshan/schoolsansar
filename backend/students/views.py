@@ -1,30 +1,54 @@
-from rest_framework import viewsets, permissions
-from .models import Student, AcademicHistory, StudentLevel
-from .serializers import (
-    StudentSerializer,
-    AcademicHistorySerializer,
-    StudentLevelSerializer,
-)
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from roles.permissions import HasPermission
+from .serializers import StudentEnrollmentSerializer
+from .models import Student
 
 
-class StudentViewSet(viewsets.ModelViewSet):
-    queryset = Student.objects.all().select_related("profile")
-    serializer_class = StudentSerializer
+class StudentEnrollmentView(APIView):
+    """
+    Unified endpoint for enrolling a new student.
+    Handles profile creation, student record, and academic placement.
+    """
 
-    def get_permissions(self):
-        if self.action in ["list", "retrieve"]:
-            return [permissions.IsAuthenticated(), HasPermission("view_student")]
-        return [permissions.IsAuthenticated(), HasPermission("manage_students")]
+    permission_classes = [IsAuthenticated, HasPermission("add_student")]
+
+    def post(self, request):
+        serializer = StudentEnrollmentSerializer(data=request.data)
+        if serializer.is_valid():
+            student = serializer.save()
+            return Response(
+                {
+                    "message": "Student enrolled successfully",
+                    "enrollment_id": student.enrollment_id,
+                    "student_id": student.id,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class AcademicHistoryViewSet(viewsets.ModelViewSet):
-    queryset = AcademicHistory.objects.all()
-    serializer_class = AcademicHistorySerializer
-    permission_classes = [permissions.IsAuthenticated, HasPermission("manage_students")]
+class StudentListView(APIView):
+    permission_classes = [IsAuthenticated, HasPermission("view_student")]
 
-
-class StudentLevelViewSet(viewsets.ModelViewSet):
-    queryset = StudentLevel.objects.all()
-    serializer_class = StudentLevelSerializer
-    permission_classes = [permissions.IsAuthenticated, HasPermission("manage_students")]
+    def get(self, request):
+        students = Student.objects.select_related("profile").all()
+        # Simple listing for now
+        data = []
+        for s in students:
+            # Finding current level
+            current = s.enrollments.filter(is_current=True).first()
+            data.append(
+                {
+                    "id": s.id,
+                    "full_name": f"{s.profile.first_name} {s.profile.last_name}",
+                    "enrollment_id": s.enrollment_id,
+                    "level": current.level if current else "N/A",
+                    "section": current.section if current else "N/A",
+                    "status": s.status,
+                }
+            )
+        return Response(data)

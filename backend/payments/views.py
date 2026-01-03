@@ -13,7 +13,7 @@ from accounts.serializers import OrganizationRegisterSerializer
 class InitPaymentView(APIView):
     def post(self, request):
         data = request.data
-        amount = "5"  # Fixed amount for now
+        amount = "500"  # Fixed amount for now
 
         # Create pending payment record
         transaction_uuid = str(uuid.uuid4())
@@ -114,14 +114,25 @@ class VerifyPaymentView(APIView):
 
         serializer = OrganizationRegisterSerializer(data=register_data)
         if serializer.is_valid():
-            result = serializer.save()
+            try:
+                result = serializer.save()
 
-            return Response(
-                {
-                    "message": "Payment verified and Tenant created successfully",
-                    "domain_url": result.get("domain_url"),
-                }
-            )
+                return Response(
+                    {
+                        "message": "Payment verified and Tenant created successfully",
+                        "domain_url": result.get("domain_url"),
+                    }
+                )
+            except Exception as e:
+                # Log the actual error for debugging
+                print(f"Error during tenant creation: {str(e)}")
+                # Return a cleaner error message to the frontend
+                return Response(
+                    {
+                        "error": f"Payment verified but failed to set up institution: {str(e)}"
+                    },
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
         else:
             # If registration fails, we might want to log this or handle it manually
             # Payment is marked COMPLETED but Org not created?

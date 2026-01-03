@@ -89,7 +89,7 @@ export default function RolesPage() {
                     <p className="text-slate-500 dark:text-slate-400 mt-1">Manage access control and user roles for your institution</p>
                 </div>
 
-                <Can I="create_role">
+                <Can I="add_role">
                     <Button
                         onClick={() => router.push("/dashboard/institution/roles/new")}
                         size="xl"
@@ -165,7 +165,7 @@ export default function RolesPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl">
-                                                    <Can I="edit_role">
+                                                    <Can I="change_role">
                                                         <DropdownMenuItem
                                                             onClick={() => router.push(`/dashboard/institution/roles/${role.id}/edit`)}
                                                             className="rounded-lg gap-2 cursor-pointer focus:bg-sky-50 focus:text-sky-600 dark:focus:bg-sky-900/20 dark:focus:text-sky-400"
