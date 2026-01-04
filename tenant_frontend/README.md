@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# EDU Sekai Tenant Frontend (School Dashboard)
 
-## Getting Started
+This is the "School Operating System" for **EDU Sekai**. Every institution uses this dashboard to manage their daily operations.
 
-First, run the development server:
+## 🚀 Features
+- **Subdomain Detection**: Automatically connects to the correct database schema based on the URL (e.g., `oxford.localhost`).
+- **Student Management**: Enrollment, listing, and academic tracking.
+- **Staff Management**: Teacher and administrator records.
+- **Dynamic Dashboard**: Personalized view for students, staff, and owners.
+- **Port**: Runs on `http://localhost:3555`.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🛠 Tech Stack
+- **Framework**: Next.js (App Router)
+- **Styling**: Tailwind CSS / Vanilla CSS
+- **Data Fetching**: Custom hooks with `useCheckSubdomain` for schema-aware verification.
+- **Auth**: JWT Cookie-based authentication sharing same login as SaaS.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 📦 Getting Started
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1.  **Install Dependencies**:
+    ```bash
+    npm install
+    ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2.  **Environment Setup**:
+    ```env
+    NEXT_PUBLIC_BASE_DOMAIN=localhost
+    NEXT_PUBLIC_API_URL=http://localhost:8000
+    ```
 
-## Learn More
+3.  **Run Development**:
+    ```bash
+    npm run dev
+    ```
 
-To learn more about Next.js, take a look at the following resources:
+## 🏗 Key Components
+- `SubdomainGuard`: A high-level wrapper that verifies the school's existence before rendering the app.
+- `NoUser` / `NoInstitute`: Error handling components for database resets or invalid URLs.
+- `Sidebar`: Dynamic navigation based on user roles (Owner, Admin, Teacher).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🌍 Domain Logic
+This app uses a multi-domain strategy. To test locally:
+1.  Register a school on the SaaS frontend (`localhost:3000`).
+2.  Once payment is verified, you will be redirected to `[yourschool].localhost:3555`.
+3.  Ensure your `hosts` file supports wildcards or manually add `your-school.localhost` to your system hosts if necessary.

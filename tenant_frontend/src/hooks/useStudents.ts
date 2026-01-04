@@ -47,12 +47,72 @@ export const useEnrollStudent = () => {
     });
 };
 
-export const useStudents = () => {
-    return useQuery({
-        queryKey: ["students"],
-        queryFn: async () => {
-            const response = await axiosInstance.get("/students/list/");
+export interface Student {
+    id: string;
+    first_name: string;
+    middle_name?: string;
+    last_name: string;
+    full_name: string;
+    enrollment_id: string;
+    level: string;
+    section: string;
+    status: string;
+    has_account: boolean;
+}
+
+export interface AccountCreationData {
+    student_id: string;
+    username: string;
+    password?: string;
+    email?: string;
+}
+
+export interface PendingCredential {
+    id: string;
+    full_name: string;
+    enrollment_id: string;
+    username: string;
+    initial_password: string;
+}
+
+export const usePortalActivation = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (enrollments: AccountCreationData[]) => {
+            const response = await axiosInstance.post("/students/portal-activation/", { enrollments });
             return response.data;
+        },
+        onSuccess: (data) => {
+            queryClient.invalidateQueries({ queryKey: ["students"] });
+            queryClient.invalidateQueries({ queryKey: ["pending-credentials"] });
+            toast.success(data.message || "Portal activated successfully!");
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.message || "Failed to activate portal";
+            toast.error(message);
+        }
+    });
+};
+
+export const useStudents = (unenrolled: boolean = false) => {
+    return useQuery({
+        queryKey: ["students", { unenrolled }],
+        queryFn: async () => {
+            const response = await axiosInstance.get(`/students/list/`, {
+                params: { unenrolled }
+            });
+            return response.data as Student[];
+        }
+    });
+};
+
+export const usePendingCredentials = () => {
+    return useQuery({
+        queryKey: ["pending-credentials"],
+        queryFn: async () => {
+            const response = await axiosInstance.get("/students/credentials/");
+            return response.data as PendingCredential[];
         }
     });
 };

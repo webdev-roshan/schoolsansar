@@ -56,3 +56,22 @@ export function useMe() {
         staleTime: 1000 * 60 * 5, // 5 minutes
     });
 }
+
+export function useChangePassword() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (newPassword: string) => {
+            const { data } = await axiosInstance.post("/auth/change-password/", {
+                new_password: newPassword
+            });
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["me"] });
+            toast.success("Password updated successfully!");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.error || "Failed to update password");
+        }
+    });
+}

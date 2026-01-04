@@ -48,14 +48,14 @@ export function useVerifyPayment() {
     });
 }
 
-async function verifyEmail(payload: { email: string; password?: string }): Promise<{ exists: boolean; valid_password: boolean }> {
-    const { data } = await axiosInstance.post<{ exists: boolean; valid_password: boolean }>("/auth/verify-email/", payload);
+async function verifyAccount(payload: { email?: string; username?: string; password?: string }): Promise<{ exists: boolean; email_exists: boolean; username_exists: boolean; valid_password: boolean }> {
+    const { data } = await axiosInstance.post<{ exists: boolean; email_exists: boolean; username_exists: boolean; valid_password: boolean }>("/auth/verify-account/", payload);
     return data;
 }
 
-export function useVerifyEmail() {
+export function useVerifyAccount() {
     return useMutation({
-        mutationFn: verifyEmail,
+        mutationFn: verifyAccount,
     });
 }
 

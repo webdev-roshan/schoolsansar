@@ -8,7 +8,7 @@ import { Loader2, GraduationCap, CheckCircle, Shield, Zap, Users } from "lucide-
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-import { useInitPayment, useVerifyEmail, useCheckDomain } from "@/hooks/payments";
+import { useInitPayment, useVerifyAccount, useCheckDomain } from "@/hooks/payments";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
@@ -35,6 +35,7 @@ const formSchema = z.object({
     subdomain: z.string()
         .min(3, "Subdomain must be at least 3 characters.")
         .regex(/^[a-z0-9]+$/, "Subdomain must be lowercase letters and numbers only."),
+    username: z.string().min(3, "Username must be at least 3 characters.").regex(/^[a-z0-9_]+$/, "Username can only contain lowercase letters, numbers, and underscores."),
     email: z.string().email("Invalid email address."),
     password: z.string().min(8, "Password must be at least 8 characters."),
     phone: z.string().min(10, "Phone number must be at least 10 digits."),
@@ -61,7 +62,7 @@ function GetStartedContent() {
     }, [searchParams]);
 
     const { mutateAsync: initPayment } = useInitPayment();
-    const { mutateAsync: verifyEmail } = useVerifyEmail();
+    const { mutateAsync: verifyAccount } = useVerifyAccount();
     const { mutateAsync: checkDomain } = useCheckDomain();
 
     const form = useForm<FormValues>({
@@ -69,6 +70,7 @@ function GetStartedContent() {
         defaultValues: {
             organizationName: "",
             subdomain: "",
+            username: "",
             email: "",
             password: "",
             phone: "",
@@ -86,10 +88,21 @@ function GetStartedContent() {
                 return;
             }
 
-            // 2. Check Email and Password
-            const emailResult = await verifyEmail({ email: values.email, password: values.password });
-            if (emailResult.exists && !emailResult.valid_password) {
-                form.setError("password", { message: "Account exists but password is incorrect." });
+            // 2. Check Username and Email
+            const accountResult = await verifyAccount({
+                email: values.email,
+                username: values.username,
+                password: values.password
+            });
+
+            if (accountResult.username_exists && !accountResult.email_exists) {
+                form.setError("username", { message: "This username is already taken by another account." });
+                setIsChecking(false);
+                return;
+            }
+
+            if (accountResult.email_exists && !accountResult.valid_password) {
+                form.setError("password", { message: "Account exists with this email but password is incorrect." });
                 setIsChecking(false);
                 return;
             }
@@ -98,6 +111,7 @@ function GetStartedContent() {
             const payload = {
                 organization_name: values.organizationName,
                 subdomain: values.subdomain,
+                username: values.username,
                 email: values.email,
                 password: values.password,
                 phone: values.phone,
@@ -282,6 +296,18 @@ function GetStartedContent() {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <FormField
                                             control={form.control}
+                                            name="username"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormControl>
+                                                        <FloatingLabelInput label="Owner Username" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <FormField
+                                            control={form.control}
                                             name="email"
                                             render={({ field }) => (
                                                 <FormItem>
@@ -292,19 +318,20 @@ function GetStartedContent() {
                                                 </FormItem>
                                             )}
                                         />
-                                        <FormField
-                                            control={form.control}
-                                            name="phone"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormControl>
-                                                        <FloatingLabelInput label="Phone Number" {...field} />
-                                                    </FormControl>
-                                                    <FormMessage />
-                                                </FormItem>
-                                            )}
-                                        />
                                     </div>
+
+                                    <FormField
+                                        control={form.control}
+                                        name="phone"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <FloatingLabelInput label="Phone Number" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
                                     <FormField
                                         control={form.control}
@@ -383,7 +410,7 @@ function GetStartedContent() {
                                         <span className="font-semibold text-slate-900">Subdomain:</span> {formData?.subdomain}.edusekai.com
                                     </p>
                                     <p className="text-sm text-slate-700">
-                                        <span className="font-semibold text-slate-900">Admin Email:</span> {formData?.email}
+                                        <span className="font-semibold text-slate-900">Admin Account:</span> {formData?.username} ({formData?.email})
                                     </p>
                                 </div>
 

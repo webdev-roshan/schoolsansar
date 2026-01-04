@@ -20,6 +20,12 @@ def create_profile_for_role(sender, instance, created, **kwargs):
         # 0. Ensure InstitutionProfile exists
         InstitutionProfile.objects.get_or_create(organization_id=org.id)
 
+        # SKIP for Students: Student profiles are created manually during admission
+        # and linked manually during portal activation.
+        # If we let this signal run, it creates a duplicate "New User" profile.
+        if role_slug == "student":
+            return
+
         # 1. Ensure the 'Identity' Profile exists
         profile, _ = Profile.objects.get_or_create(
             user_id=user.id,

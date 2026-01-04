@@ -17,6 +17,7 @@ export interface RegisterOrganizationResponse {
 export interface InitPaymentPayload {
     organization_name: string;
     subdomain: string;
+    username: string;
     email: string;
     password: string;
     phone: string;

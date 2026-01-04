@@ -87,8 +87,10 @@ class MeView(APIView):
 
         data = {
             "id": user.id,
+            "username": user.username,
             "email": user.email,
             "is_active": user.is_active,
+            "needs_password_change": user.needs_password_change,
             "profile": None,
             "roles": [],
             "active_role": None,
@@ -143,27 +145,68 @@ class MeView(APIView):
         return Response(data)
 
 
-class VerifyEmailView(APIView):
+class VerifyAccountView(APIView):
+    """
+    Checks if a username or email already exists in the global identity pool.
+    Used during 'Get Started' to guide the user to login or choose new names.
+    """
+
     permission_classes = [AllowAny]
 
     def post(self, request):
         email = request.data.get("email")
+        username = request.data.get("username")
         password = request.data.get("password")
-
-        if not email:
-            return Response(
-                {"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST
-            )
 
         from accounts.models import User
 
-        user = User.objects.filter(email=email).first()
+        results = {
+            "email_exists": False,
+            "username_exists": False,
+            "valid_password": False,
+            "exists": False,  # Compatibility flag
+        }
 
-        if not user:
-            return Response({"exists": False, "valid_password": False})
+        user_by_email = User.objects.filter(email=email).first() if email else None
+        user_by_username = (
+            User.objects.filter(username=username).first() if username else None
+        )
 
-        if not password:
-            return Response({"exists": True, "valid_password": False})
+        if user_by_email:
+            results["email_exists"] = True
+            results["exists"] = True
+            if password:
+                results["valid_password"] = user_by_email.check_password(password)
 
-        is_valid = user.check_password(password)
-        return Response({"exists": True, "valid_password": is_valid})
+        if user_by_username:
+            results["username_exists"] = True
+            # If we were checking by username and email together,
+            # we consider it 'existing' if either exists
+            results["exists"] = True
+
+        return Response(results)
+
+
+class ChangePasswordView(APIView):
+    """
+    Enables users to update their password.
+    Specifically clears the 'needs_password_change' flag and temporary credentials.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        new_password = request.data.get("new_password")
+        if not new_password or len(new_password) < 8:
+            return Response(
+                {"error": "A valid password of at least 8 characters is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = request.user
+        user.set_password(new_password)
+        user.needs_password_change = False
+        user.initial_password_display = None
+        user.save()
+
+        return Response({"message": "Password updated successfully."})

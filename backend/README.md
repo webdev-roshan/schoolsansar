@@ -61,16 +61,107 @@ The backend includes a `seed_public.py` script (executed via `entrypoint.sh`) th
 
 ---
 
-## Student Enrollment Workflow
-The enrollment is an atomic process across schemas:
-1.  **Identity Creation**: Uses the `User` model in the public schema.
-2.  **Profile Initialization**: Creates a `Profile` in the tenant schema linked via `user_id`.
-3.  **Role Assignment**: Signal-driven creation of `Student` or `StaffMember` records.
-4.  **Branding**: Auto-initialization of `InstitutionProfile` for the organization.
+## Student Portal Access Workflow
+
+The portal activation process bridges admitted students to their global digital identity:
+
+### **Phase 1: Admission (Profile Creation)**
+1.  **Admin Dashboard**: School staff admit a new student
+2.  **Profile Creation**: Creates `Profile` in tenant schema with personal data
+3.  **No Login Access**: `user_id = NULL`, `local_username = NULL`
+4.  **Student Record**: Creates domain-specific `Student` record
+
+**Result**: Student is admitted to the school but CANNOT log in yet.
+
+### **Phase 2: Portal Activation (Identity Bridge)**
+1.  **Username Generation**:
+    - **Local Username**: `firstname + middlename + lastname` (e.g., `johnprasaddoe`)
+    - **Uniqueness Check**: If exists in THIS school → append number (e.g., `johnprasaddoe2`)
+    - **Global Username**: `local_username + _ + random_hex` (e.g., `johnprasaddoe_a1b2c3`)
+
+2.  **User Creation**: Creates `User` in public schema with:
+    - `username`: Global username (for Django auth)
+    - `password`: Hashed temporary password
+    - `needs_password_change`: `True` (force reset on first login)
+    - `initial_password_display`: Plain text (for admin distribution only)
+
+3.  **Profile Linking**:
+    - `profile.user_id = user.id`
+    - `profile.local_username = local_username` (e.g., `johnprasaddoe`)
+
+4.  **Role Assignment**: Creates `UserRole` linking user to "student" role for THIS organization
+
+**Result**: Student can now log in with their `local_username` and temporary password.
+
+### **Phase 3: Student Login**
+1.  **User Input**: Student enters `local_username` (e.g., `johnprasaddoe`) and password
+2.  **Username Resolution**:
+    - System queries `Profile` in current tenant: `local_username = "johnprasaddoe"`
+    - Retrieves linked `User` from public schema via `user_id`
+    - Gets global `username` (e.g., `johnprasaddoe_a1b2c3`)
+3.  **Authentication**: Django authenticates using global `username` + password
+4.  **Password Change**: If `needs_password_change = True`, redirect to password reset modal
+5.  **Success**: User logged in and sees dashboard
+
+### **Key Design Principles:**
+- **School Isolation**: Each school has its own `local_username` namespace
+- **Global Uniqueness**: `User.username` is globally unique across all schools
+- **User-Friendly**: Students see simple usernames like `johnprasaddoe`, not `johnprasaddoe_a1b2c3`
+- **Security**: Forced password change on first login, hashed storage
+- **Scalability**: No cross-schema joins, ready for horizontal sharding
+
+## 🛠 Developer Tools & Management
+
+### 1. Automated Setup (`entrypoint.sh`)
+The backend is designed to be "self-healing" during development:
+- **Auto-Migrations**: Automatically runs `makemigrations` and `migrate_schemas` on boot.
+- **Seeding**: Automatically creates the public tenant, maps `localhost`, and creates a superuser using `.env` credentials.
+- **Cleanup (Optional)**: Contains commented-out logic to hard-reset migration files.
+
+### 2. Audit & Integrity Scripts
+To handle the unique challenges of cross-schema "Soft-Links", we have dedicated tools:
+
+*   **`audit_orphans` Command (Critical)**:
+    Scans every tenant schema for broken links (profiles pointing to deleted accounts).
+    ```bash
+    # Report orphans
+    docker compose exec backend python manage.py audit_orphans
+    
+    # Purge orphans
+    docker compose exec backend python manage.py audit_orphans --fix
+    ```
+
+*   **`audit_unlinked` Command (Inventory)**:
+    Lists profiles that have no assigned login account (e.g. students without emails).
+    ```bash
+    docker compose exec backend python manage.py audit_unlinked
+    ```
+
+*   **`seed_public.py`**:
+    Ensures the infrastructure layer (SaaS admin) is always ready.
+
+### 3. Migration Strategies
+- **Persistent Mode (Default)**: Standard Django flow. Data is preserved across restarts.
+- **Clean Slate Mode**: To reset everything including schemas, run `docker compose down -v`.
+
+---
+
+## 🧪 Testing
+The backend includes an integrity suite to ensure tenancy logic never fails.
+```bash
+# Run accounts and tenancy integrity tests
+docker compose exec backend python manage.py test accounts
+```
+
+## 🚀 Local API Usage
+- **Base URL**: `http://localhost:8000/api/`
+- **Admin**: `http://localhost:8000/admin/` (Global)
+- **Tenant Admin**: `http://[slug].localhost:8000/admin/` (School Specific)
+
+---
 
 ## Tech Stack
 *   **Backend**: Django 5.x, Django Rest Framework
-*   **Tenancy**: django-tenants (Schema-based)
-*   **Frontends**: Next.js (Main SaaS on :3000, Tenant Dashboard on :3555)
-*   **Auth**: SimpleJWT with Secure HttpOnly Cookies
-*   **Database**: PostgreSQL 15 (Alpine)
+*   **Tenancy**: django-tenants (PostgreSQL Schemas)
+*   **Security**: PyJWT, Secure HttpOnly Cookies
+*   **Storage**: PostgreSQL 15-Alpine

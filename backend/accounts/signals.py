@@ -1,31 +1,41 @@
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
+from django.db import connection
+from django.apps import apps
+from django_tenants.utils import schema_context
+import logging
+
+logger = logging.getLogger(__name__)
+
 from .models import User
 from organizations.models import Organization
-from django_tenants.utils import tenant_context
-from django.apps import apps
-from django.db import connection
 
 
 @receiver(pre_delete, sender=User)
 def cleanup_user_tenant_data(sender, instance, **kwargs):
     """
-    Called BEFORE a User is deleted.
-    Goes through every school and manually wipes their Identity
-    so no orphaned data is left behind.
+    Ensures that when a global User is removed, their secondary data is
+    wiped across all tenant schemas to prevent orphaned entries.
     """
-    # 1. Get all school tenants (Filter out 'public' and others)
-    tenants = Organization.objects.exclude(schema_name="public").all()
     user_id = instance.id
+    db = instance._state.db or "default"
 
+    # 1. Fetch all tenants requiring cleanup
+    try:
+        tenants = list(Organization.objects.using(db).exclude(schema_name="public"))
+    except Exception as e:
+        logger.error(f"Failed to fetch tenants for user cleanup: {str(e)}")
+        return
+
+    # 2. Iterate through each tenant and perform the purge
     for tenant in tenants:
-        with tenant_context(tenant):
+        with schema_context(tenant.schema_name):
             try:
-                # Try to get the Profile model safely
-                Profile = apps.get_model("profiles", "Profile")
-                # Delete the profile manually.
-                # This will trigger cascades to Students/Staff in this tenant.
-                Profile.objects.filter(user_id=user_id).delete()
+                ProfileModel = apps.get_model("profiles", "Profile")
+                # Using .all() to force a clean queryset on the current schema context
+                ProfileModel.objects.using(db).filter(user_id=user_id).delete()
             except Exception as e:
-                # Silent skip if tenant doesn't have profiles app
+                logger.warning(
+                    f"Could not purge data for user {user_id} in schema {tenant.schema_name}: {str(e)}"
+                )
                 continue

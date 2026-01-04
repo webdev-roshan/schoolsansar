@@ -6,19 +6,23 @@ import uuid
 
 class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
-    email = models.EmailField(unique=True)
+    username = models.CharField(max_length=150, unique=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+
+    # Security & Identity Management
+    needs_password_change = models.BooleanField(default=False)
+    initial_password_display = models.CharField(max_length=255, null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     objects = UserManager()
 
-    USERNAME_FIELD = "email"
+    USERNAME_FIELD = "username"
     REQUIRED_FIELDS = []
 
     def __str__(self):
-        return self.email
+        return self.username

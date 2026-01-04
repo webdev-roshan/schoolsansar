@@ -2,8 +2,10 @@ import { AnyProfile } from "./Profile";
 
 export interface User {
     id: string;
+    username: string;
     email: string;
     is_active: boolean;
+    needs_password_change?: boolean;
     profile: AnyProfile;
     roles: string[];
     active_role: string | null;

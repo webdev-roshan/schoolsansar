@@ -5,12 +5,15 @@ from django.db import connection
 
 class ProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(source="user.email", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
 
     class Meta:
         model = Profile
         fields = (
             "id",
             "user_id",
+            "username",
+            "local_username",
             "email",
             "first_name",
             "middle_name",
@@ -25,7 +28,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
-        read_only_fields = ("id", "user_id", "email")
+        read_only_fields = ("id", "user_id", "email", "username")
 
 
 class InstitutionProfileSerializer(serializers.ModelSerializer):

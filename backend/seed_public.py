@@ -44,13 +44,20 @@ def create_public_tenant():
     superuser_password = config("SUPERUSER_PASSWORD", default=None)
 
     if superuser_email and superuser_password:
-        if not User.objects.filter(email=superuser_email).exists():
-            print(f"Creating superuser: {superuser_email}")
+        # For superuser, we use the email as the username during dev seeding
+        username = superuser_email.split("@")[0]
+
+        user = User.objects.filter(username=username).first()
+        if not user:
+            print(f"Creating superuser: {username} ({superuser_email})")
             User.objects.create_superuser(
-                email=superuser_email, password=superuser_password
+                username=username, email=superuser_email, password=superuser_password
             )
         else:
-            print(f"Superuser {superuser_email} already exists.")
+            print(f"Superuser {username} already exists.")
+            # Ensure password is correct for dev convenience
+            user.set_password(superuser_password)
+            user.save()
     else:
         print(
             "SUPERUSER_EMAIL or SUPERUSER_PASSWORD not found in .env, skipping superuser creation."

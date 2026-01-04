@@ -12,18 +12,39 @@ from roles.models import Role, UserRole
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "email", "is_active")
+        fields = ("id", "username", "email", "is_active")
 
 
 class LoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
+    username = serializers.CharField()
     password = serializers.CharField(write_only=True)
 
     def validate(self, attrs):
-        email = attrs.get("email")
+        local_username = attrs.get(
+            "username"
+        )  # User enters their school-specific username
         password = attrs.get("password")
 
-        user = authenticate(email=email, password=password)
+        # Step 1: Try to find the Profile with this local_username in the current tenant
+        from profiles.models import Profile
+        from django.db import connection
+
+        profile = Profile.objects.filter(local_username=local_username).first()
+
+        if not profile or not profile.user_id:
+            # Fallback: Try direct authentication (for backwards compatibility or owner accounts)
+            user = authenticate(username=local_username, password=password)
+        else:
+            # Step 2: Get the global User linked to this Profile
+            from accounts.models import User
+
+            global_user = User.objects.filter(id=profile.user_id).first()
+
+            if not global_user:
+                raise AuthenticationFailed("Invalid credentials")
+
+            # Step 3: Authenticate using the global username
+            user = authenticate(username=global_user.username, password=password)
 
         if not user:
             raise AuthenticationFailed("Invalid credentials")
@@ -38,6 +59,7 @@ class LoginSerializer(serializers.Serializer):
 class OrganizationRegisterSerializer(serializers.Serializer):
     organization_name = serializers.CharField(max_length=255)
     subdomain = serializers.SlugField(max_length=50)
+    username = serializers.CharField(max_length=150)
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True, min_length=8)
     phone = serializers.CharField(max_length=20, required=False, allow_blank=True)
@@ -47,6 +69,13 @@ class OrganizationRegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError("This subdomain is already taken.")
         return value
 
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError(
+                "This username is already taken. Please choose another one."
+            )
+        return value
+
     def validate_email(self, value):
         # We allow existing users to register new organizations
         return value
@@ -54,6 +83,7 @@ class OrganizationRegisterSerializer(serializers.Serializer):
     def create(self, validated_data):
         org_name = validated_data["organization_name"]
         subdomain = validated_data["subdomain"]
+        username = validated_data["username"]
         email = validated_data["email"]
         password = validated_data["password"]
         phone = validated_data.get("phone", "")
@@ -77,6 +107,7 @@ class OrganizationRegisterSerializer(serializers.Serializer):
         )
 
         # 3. Handle User (Shared in Public Schema)
+        # Check by email first as fallback, but primary identification is now username
         user = User.objects.filter(email=email).first()
         if user:
             # Security: Verify password if user exists
@@ -87,7 +118,9 @@ class OrganizationRegisterSerializer(serializers.Serializer):
                     }
                 )
         else:
-            user = User.objects.create_user(email=email, password=password)
+            user = User.objects.create_user(
+                username=username, email=email, password=password
+            )
 
         # 4. Create "Owner" Role if not exists (Public Schema)
         owner_role, _ = Role.objects.get_or_create(
@@ -98,12 +131,15 @@ class OrganizationRegisterSerializer(serializers.Serializer):
         # This triggers profiles/signals.py to auto-create Identity Profile, StaffProfile and InstitutionProfile
         UserRole.objects.create(user=user, organization=organization, role=owner_role)
 
-        # 6. Update the auto-created personal profile with the user's phone
+        # 6. Update the auto-created personal profile with the user's phone and local_username
         from profiles.models import Profile
         from django_tenants.utils import tenant_context
 
         with tenant_context(organization):
-            Profile.objects.filter(user_id=user.id).update(phone=phone)
+            # We set the local_username for the owner in their isolated schema
+            Profile.objects.filter(user_id=user.id).update(
+                phone=phone, local_username=username
+            )
 
         return {
             "organization": organization,

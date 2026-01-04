@@ -18,12 +18,12 @@ import Logo from "@/components/Logo";
 export default function LoginPage() {
     const router = useRouter();
     const { mutate: login, isPending: isLoading } = useLogin();
-    const [email, setEmail] = useState("");
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        login({ email, password }, {
+        login({ username, password }, {
             onSuccess: () => {
                 router.push("/dashboard/profile");
             }
@@ -82,11 +82,11 @@ export default function LoginPage() {
                         <CardContent>
                             <form onSubmit={handleLogin} className="space-y-6">
                                 <FloatingLabelInput
-                                    id="email"
-                                    type="email"
-                                    label="Work Email"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
+                                    id="username"
+                                    type="text"
+                                    label="Username"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
                                     required
                                     className="h-12"
                                 />

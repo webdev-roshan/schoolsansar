@@ -38,6 +38,11 @@ class Profile(models.Model):
         upload_to="profiles/photos/", null=True, blank=True
     )
 
+    # Memorable Local Identity
+    local_username = models.CharField(
+        max_length=150, unique=True, null=True, blank=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

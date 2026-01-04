@@ -7,10 +7,12 @@ import {
     Plus,
     Search,
     UserPlus,
+    Upload,
     MoreHorizontal,
     Filter,
     GraduationCap,
-    Loader2
+    LoaderCircle,
+    Lock
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -40,7 +42,7 @@ export default function StudentsPage() {
     if (isLoading) {
         return (
             <div className="flex h-[60vh] items-center justify-center">
-                <Loader2 className="h-12 w-12 animate-spin text-sky-600" />
+                <LoaderCircle className="h-12 w-12 animate-spin text-sky-600" />
             </div>
         );
     }
@@ -50,23 +52,32 @@ export default function StudentsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
-                        <GraduationCap className="h-8 w-8 text-sky-600" />
                         Student Directory
                     </h1>
-                    <p className="text-slate-500 dark:text-slate-400 mt-1">
+                    <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">
                         View and manage all students enrolled in your institution
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3">
                     {(isOwner || can("add_student")) && (
-                        <Button
-                            onClick={() => router.push("/dashboard/students/admissions")}
-                            className="rounded-xl h-11 px-6 bg-sky-600 hover:bg-sky-700 shadow-lg shadow-sky-600/20"
-                        >
-                            <UserPlus className="h-4 w-4 mr-2" />
-                            New Admission
-                        </Button>
+                        <>
+                            <Button
+                                onClick={() => router.push("/dashboard/students/portal-activation")}
+                                variant="outline"
+                                size="xl"
+                            >
+                                <Lock className="h-4 w-4 mr-2" />
+                                Portal Activation
+                            </Button>
+                            <Button
+                                onClick={() => router.push("/dashboard/students/admissions")}
+                                size="xl"
+                            >
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                New Admission
+                            </Button>
+                        </>
                     )}
                 </div>
             </div>
@@ -83,7 +94,7 @@ export default function StudentsPage() {
                     />
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" className="rounded-xl border-slate-200 dark:border-slate-800">
+                    <Button variant="outline" size="lg">
                         <Filter className="h-4 w-4 mr-2" />
                         Filters
                     </Button>
@@ -100,11 +111,12 @@ export default function StudentsPage() {
                                 <TableHead>Level / Grade</TableHead>
                                 <TableHead>Section</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Account</TableHead>
                                 <TableHead className="text-right pr-6">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {students?.length > 0 ? (
+                            {students && students.length > 0 ? (
                                 students.map((student: any) => (
                                     <TableRow key={student.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
                                         <TableCell className="py-4 pl-6">
@@ -116,19 +128,25 @@ export default function StudentsPage() {
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <code className="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                                            <code className="text-xs">
                                                 {student.enrollment_id}
                                             </code>
                                         </TableCell>
                                         <TableCell className="font-medium text-sky-600">{student.level}</TableCell>
                                         <TableCell>{student.section || 'Unassigned'}</TableCell>
+                                        <TableCell className="capitalize">
+                                            {student.status}
+                                        </TableCell>
                                         <TableCell>
-                                            <Badge className={cn(
-                                                "capitalize rounded-lg px-2.5 py-0.5 border-none",
-                                                student.status === 'active' ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-slate-100 text-slate-700"
-                                            )}>
-                                                {student.status}
-                                            </Badge>
+                                            {student.has_account ? (
+                                                <>
+                                                    Activated
+                                                </>
+                                            ) : (
+                                                <>
+                                                    Offline
+                                                </>
+                                            )}
                                         </TableCell>
                                         <TableCell className="text-right pr-6">
                                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">

@@ -15,11 +15,6 @@ import {
     Loader2,
     Globe,
     Save,
-    Building2,
-    Facebook,
-    Instagram,
-    Twitter,
-    Linkedin,
     Compass,
     Image as ImageIcon,
 } from "lucide-react";
@@ -128,7 +123,7 @@ export default function InstitutionSettingsPage() {
                 {/* Header info */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                     <div>
-                        <h1 className="text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">Institution Profile</h1>
+                        <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Institution Profile</h1>
                         <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">Manage your school's brand and public identity</p>
                     </div>
                     {canEdit && (
@@ -195,7 +190,6 @@ export default function InstitutionSettingsPage() {
                                     {...form.register("tagline")}
                                     id="tagline"
                                     label="Institutional Tagline"
-                                    placeholder="Empowering the leaders of tomorrow"
                                     error={form.formState.errors.tagline?.message}
                                     disabled={!canEdit}
                                 />
@@ -206,7 +200,6 @@ export default function InstitutionSettingsPage() {
                                         id="email"
                                         label="Official School Email"
                                         type="email"
-                                        placeholder="info@school.edu"
                                         error={form.formState.errors.email?.message}
                                         disabled={!canEdit}
                                     />
@@ -214,7 +207,6 @@ export default function InstitutionSettingsPage() {
                                         {...form.register("phone")}
                                         id="phone"
                                         label="Official School Phone"
-                                        placeholder="+1 (234) 567-890"
                                         error={form.formState.errors.phone?.message}
                                         disabled={!canEdit}
                                     />
@@ -226,7 +218,6 @@ export default function InstitutionSettingsPage() {
                                         {...form.register("about")}
                                         id="about"
                                         className="min-h-[140px] bg-slate-50 dark:bg-slate-800/50 border-transparent focus:border-sky-500 dark:focus:border-sky-500 transition-all rounded-3xl p-6 text-base"
-                                        placeholder="Write a brief introduction about your institution..."
                                         disabled={!canEdit}
                                     />
                                 </div>
@@ -293,45 +284,37 @@ export default function InstitutionSettingsPage() {
                             </CardHeader>
                             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6">
                                 <div className="relative">
-                                    <Facebook className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-600" />
                                     <FloatingLabelInput
                                         {...form.register("facebook_url")}
                                         id="facebook_url"
                                         label="Facebook URL"
-                                        className="pl-14"
                                         error={form.formState.errors.facebook_url?.message}
                                         disabled={!canEdit}
                                     />
                                 </div>
                                 <div className="relative">
-                                    <Instagram className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-pink-600" />
                                     <FloatingLabelInput
                                         {...form.register("instagram_url")}
                                         id="instagram_url"
                                         label="Instagram URL"
-                                        className="pl-14"
                                         error={form.formState.errors.instagram_url?.message}
                                         disabled={!canEdit}
                                     />
                                 </div>
                                 <div className="relative">
-                                    <Twitter className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-sky-500" />
                                     <FloatingLabelInput
                                         {...form.register("twitter_url")}
                                         id="twitter_url"
                                         label="Twitter URL"
-                                        className="pl-14"
                                         error={form.formState.errors.twitter_url?.message}
                                         disabled={!canEdit}
                                     />
                                 </div>
                                 <div className="relative">
-                                    <Linkedin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-blue-800" />
                                     <FloatingLabelInput
                                         {...form.register("linkedin_url")}
                                         id="linkedin_url"
                                         label="LinkedIn URL"
-                                        className="pl-14"
                                         error={form.formState.errors.linkedin_url?.message}
                                         disabled={!canEdit}
                                     />

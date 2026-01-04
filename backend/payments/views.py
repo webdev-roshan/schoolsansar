@@ -23,6 +23,7 @@ class InitPaymentView(APIView):
             amount=amount,
             organization_name=data.get("organization_name"),
             subdomain=data.get("subdomain"),
+            username=data.get("username"),
             email=data.get("email"),
             phone=data.get("phone"),
             password=data.get("password"),
@@ -107,6 +108,7 @@ class VerifyPaymentView(APIView):
         register_data = {
             "organization_name": payment.organization_name,
             "subdomain": payment.subdomain,
+            "username": payment.username,
             "email": payment.email,
             "password": payment.password,
             "phone": payment.phone,

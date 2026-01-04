@@ -13,9 +13,9 @@ fi
 
 # Run migrations
 # DEV TIP: Uncomment the next 3 lines and run 'docker compose down -v' to hard-reset migrations
-# echo "Development Mode: Cleaning old migration files to ensure sync with current models..."
-# find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
-# find . -path "*/migrations/*.pyc" -delete
+echo "Development Mode: Cleaning old migration files to ensure sync with current models..."
+find . -path "*/migrations/*.py" -not -name "__init__.py" -delete
+find . -path "*/migrations/*.pyc" -delete
 
 echo "Generating fresh migrations..."
 python manage.py makemigrations --noinput
