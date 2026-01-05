@@ -124,6 +124,7 @@ class CredentialDistributionView(APIView):
     """
     Lists students who have been activated but haven't changed their password.
     Includes their initial temporary password.
+    Optimized to prevent N+1 queries.
     """
 
     permission_classes = [IsAuthenticated, HasPermission("view_student")]
@@ -133,29 +134,35 @@ class CredentialDistributionView(APIView):
 
         User = apps.get_model("accounts", "User")
 
-        # We need to find students whose linked User hasn't changed password
-        # This is restricted to the current tenant because Student is a tenant model
+        # 1. Fetch Students
         students = Student.objects.filter(
             profile__user_id__isnull=False
         ).select_related("profile")
 
+        # 2. Collect User IDs
+        user_ids = [s.profile.user_id for s in students if s.profile.user_id]
+
+        if not user_ids:
+            return Response([])
+
+        # 3. Bulk Fetch Users (1 Query)
+        users = User.objects.filter(id__in=user_ids)
+        user_map = {u.id: u for u in users}
+
         data = []
         for s in students:
-            # Fetch the global user safely
-            try:
-                user = User.objects.get(id=s.profile.user_id)
-                if user.needs_password_change and user.initial_password_display:
-                    data.append(
-                        {
-                            "id": s.id,
-                            "full_name": f"{s.profile.first_name} {s.profile.last_name}",
-                            "enrollment_id": s.enrollment_id,
-                            "username": s.profile.local_username or user.username,
-                            "initial_password": user.initial_password_display,
-                        }
-                    )
-            except User.DoesNotExist:
-                continue
+            user = user_map.get(s.profile.user_id)
+
+            if user and user.needs_password_change and user.initial_password_display:
+                data.append(
+                    {
+                        "id": s.id,
+                        "full_name": f"{s.profile.first_name} {s.profile.last_name}",
+                        "enrollment_id": s.enrollment_id,
+                        "username": s.profile.local_username or user.username,
+                        "initial_password": user.initial_password_display,
+                    }
+                )
 
         return Response(data)
 

@@ -93,6 +93,12 @@ SYSTEM_PERMISSIONS = [
         "module": "Staff",
         "description": "Remove staff records from the system",
     },
+    {
+        "codename": "activate_staff_portal",
+        "name": "Activate Staff Portal",
+        "module": "Staff",
+        "description": "Generate and manage staff/instructor portal credentials",
+    },
     # Family / Parent Management
     {
         "codename": "view_family",

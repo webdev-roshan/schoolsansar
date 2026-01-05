@@ -56,7 +56,13 @@ class Profile(models.Model):
     @property
     def user(self):
         """Helper to fetch the global User object manually."""
+        if hasattr(self, "_user_cache"):
+            return self._user_cache
+
         from accounts.models import User
+
+        if not self.user_id:
+            return None
 
         return User.objects.filter(id=self.user_id).first()
 

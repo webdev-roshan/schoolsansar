@@ -12,7 +12,7 @@ from roles.models import Role, UserRole
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ("id", "username", "email", "is_active")
+        fields = ("id", "username", "email", "is_active", "needs_password_change")
 
 
 class LoginSerializer(serializers.Serializer):

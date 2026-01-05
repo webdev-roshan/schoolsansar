@@ -1,18 +1,25 @@
 import {
     LayoutDashboard,
-    UserCircle,
-    School,
-    Settings,
-    GraduationCap,
     Users,
+    UserPlus,
+    GraduationCap,
     BookOpen,
     FileText,
-    Shield
+    Shield,
+    Settings,
+    Briefcase,
+    School,
+    Lock,
+    UserCog,
+    Bus,
+    Baby,
+    Receipt,
+    CalendarCheck
 } from "lucide-react";
 import { SidebarItemType } from "@/components/dashboard/Sidebar/SidebarItem";
 
 export const getMenuItems = (user: any, can: (permission: string) => boolean): SidebarItemType[] => {
-    // 1. Core Menu Items (Always Visible to logged-in users)
+    // 1. Dashboard (Global)
     const menuItems: SidebarItemType[] = [
         {
             label: "Dashboard",
@@ -21,92 +28,89 @@ export const getMenuItems = (user: any, can: (permission: string) => boolean): S
         }
     ];
 
-    // 2. Academic Management (Permission Protected)
-    const academicChildren: SidebarItemType[] = [];
-
+    // 2. Student Management (Core Domain)
+    const studentChildren: SidebarItemType[] = [];
     if (can("view_student")) {
-        const studentChildren = [
-            { label: "Active Students", href: "/dashboard/students" }
-        ];
+        studentChildren.push({ label: "Student Directory", href: "/dashboard/students" });
+    }
+    if (can("add_student")) {
+        studentChildren.push({ label: "Admissions", href: "/dashboard/students/admissions" });
+    }
+    if (can("activate_student_portal")) {
+        studentChildren.push({ label: "Portal Access", href: "/dashboard/students/portal-activation" });
+    }
+    // Future: Attendance
+    // studentChildren.push({ label: "Attendance", href: "/dashboard/students/attendance" });
 
-        if (can("add_student")) {
-            studentChildren.push({ label: "Admissions", href: "/dashboard/students/admissions" });
-        }
-
-        if (can("activate_student_portal")) {
-            studentChildren.push({ label: "Portal Activation", href: "/dashboard/students/portal-activation" });
-        }
-
-        academicChildren.push({
-            label: "Students",
+    if (studentChildren.length > 0) {
+        menuItems.push({
+            label: "Student Management",
             icon: Users,
-            href: "/dashboard/students",
             children: studentChildren
         });
     }
 
-    // Courses and Exams currently use placeholders or will need permissions later
-    academicChildren.push({
-        label: "Courses",
-        icon: BookOpen,
-        href: "/dashboard/courses"
-    });
+    // 3. Human Resources (Staff & Instructors) -> Focus on Employment
+    const hrChildren: SidebarItemType[] = [];
+    if (can("view_staff")) {
+        hrChildren.push({ label: "Staff Directory", href: "/dashboard/staff" }); // Updated to correct route
+    }
+    if (can("add_staff")) {
+        hrChildren.push({ label: "Recruitment", href: "/dashboard/staff/onboarding" });
+    }
+    if (can("activate_staff_portal")) {
+        hrChildren.push({ label: "Portal Access", href: "/dashboard/staff/activation" });
+    }
+    // Future: Payroll
+    // hrChildren.push({ label: "Payroll", href: "/dashboard/hr/payroll" });
 
-    academicChildren.push({
-        label: "Examinations",
-        icon: FileText,
-        href: "/dashboard/exams"
-    });
+    if (hrChildren.length > 0) {
+        menuItems.push({
+            label: "Human Resources",
+            icon: Briefcase,
+            children: hrChildren
+        });
+    }
+
+    // 4. Academics (The "Work" of Instructors) -> Focus on Teaching
+    const academicChildren: SidebarItemType[] = [];
+    // Currently placeholders, but this is where your "Heavy" instructor modules will grow
+    academicChildren.push({ label: "Courses & Classes", href: "/dashboard/courses" });
+    academicChildren.push({ label: "Examinations", href: "/dashboard/exams" });
+    // Future: Timetable, Syllabus, Assignments, Live Classes
+    // academicChildren.push({ label: "Live Classes", href: "/dashboard/academics/live" });
 
     if (academicChildren.length > 0) {
         menuItems.push({
-            label: "Academic Management",
+            label: "Academics",
             icon: GraduationCap,
             children: academicChildren
         });
     }
 
-    // 3. Institution Management Section (Permission Protected)
-    const institutionChildren: SidebarItemType[] = [];
+    // 5. Administration (Settings, Roles, Families)
+    const adminChildren: SidebarItemType[] = [];
 
     if (can("view_institution_profile")) {
-        institutionChildren.push({
-            label: "Settings",
-            icon: Settings,
-            href: "/dashboard/institution/settings"
-        });
-    }
-
-    if (can("view_staff")) {
-        institutionChildren.push({
-            label: "Staff Directory",
-            icon: Users,
-            href: "/dashboard/institution/staff"
-        });
+        adminChildren.push({ label: "Institution Profile", href: "/dashboard/institution/settings" });
     }
 
     if (can("view_role")) {
-        institutionChildren.push({
-            label: "Roles & Permissions",
-            icon: Shield,
-            href: "/dashboard/institution/roles"
-        });
+        adminChildren.push({ label: "Roles & Permissions", href: "/dashboard/institution/roles" });
     }
 
     if (can("view_family")) {
-        institutionChildren.push({
-            label: "Family Portal",
-            icon: Users,
-            href: "/dashboard/institution/families"
-        });
+        adminChildren.push({ label: "Family Accounts", href: "/dashboard/institution/families" });
     }
 
-    // Only add the Institution section if there are actually items to show
-    if (institutionChildren.length > 0) {
+    // Future: Transport, Fees (Could be separate Finance module)
+    // adminChildren.push({ label: "Transport", href: "/dashboard/admin/transport", icon: Bus });
+
+    if (adminChildren.length > 0) {
         menuItems.push({
-            label: "Institution",
-            icon: School,
-            children: institutionChildren
+            label: "Administration",
+            icon: Settings,
+            children: adminChildren
         });
     }
 

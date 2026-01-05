@@ -20,10 +20,10 @@ def create_profile_for_role(sender, instance, created, **kwargs):
         # 0. Ensure InstitutionProfile exists
         InstitutionProfile.objects.get_or_create(organization_id=org.id)
 
-        # SKIP for Students: Student profiles are created manually during admission
-        # and linked manually during portal activation.
+        # SKIP for Students and Instructors: These profiles are created manually
+        # during admission/onboarding and linked manually during portal activation.
         # If we let this signal run, it creates a duplicate "New User" profile.
-        if role_slug == "student":
+        if role_slug in ["student", "instructor"]:
             return
 
         # 1. Ensure the 'Identity' Profile exists
@@ -36,26 +36,16 @@ def create_profile_for_role(sender, instance, created, **kwargs):
         )
 
         # 2. Create Role-Specific domain data
-        if role_slug == "student":
-            Student = apps.get_model("students", "Student")
-            Student.objects.get_or_create(
-                profile=profile,
-                defaults={"enrollment_id": f"STD-{str(user.id)[:8].upper()}"},
-            )
-
-        elif role_slug == "instructor":
+        if role_slug == "staff" or role_slug == "owner":
             StaffMember = apps.get_model("staff", "StaffMember")
-            Instructor = apps.get_model("staff", "Instructor")
-
-            staff, _ = StaffMember.objects.get_or_create(
+            StaffMember.objects.get_or_create(
                 profile=profile,
                 defaults={
                     "employee_id": f"EMP-{str(user.id)[:8].upper()}",
-                    "designation": "Instructor",
+                    "designation": (
+                        "Owner / Administrator" if role_slug == "owner" else "Staff"
+                    ),
                 },
-            )
-            Instructor.objects.get_or_create(
-                staff_member=staff, defaults={"specialization": "General"}
             )
 
         elif role_slug == "staff" or role_slug == "owner":

@@ -59,7 +59,7 @@ export default function PasswordChangeGuard({ children }: { children: React.Reac
 
                     {/* Header Branding */}
                     <div className="text-center space-y-2">
-                        <div className="mx-auto w-16 h-16 bg-gradient-to-tr from-amber-500 to-orange-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-orange-500/30 mb-6">
+                        <div className="mx-auto w-16 h-16 bg-linear-gradient-to-tr from-amber-500 to-orange-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-orange-500/30 mb-6">
                             <ShieldAlert className="h-8 w-8 text-white" />
                         </div>
                         <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
