@@ -6,7 +6,7 @@ from .serializers import (
     StaffMemberSerializer,
     InstructorSerializer,
     InstructorOnboardingSerializer,
-    InstructorActivationSerializer,
+    InstructorDetailSerializer,
 )
 from roles.permissions import HasPermission
 
@@ -73,7 +73,7 @@ class StaffMemberViewSet(viewsets.ModelViewSet):
 
 class InstructorViewSet(viewsets.ModelViewSet):
     queryset = Instructor.objects.all().select_related("staff_member__profile")
-    serializer_class = InstructorSerializer
+    serializer_class = InstructorDetailSerializer
 
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:

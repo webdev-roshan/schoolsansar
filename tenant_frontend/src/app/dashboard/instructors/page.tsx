@@ -1,7 +1,21 @@
+"use client";
+
 import Link from "next/link";
-import { UserPlus } from "lucide-react";
+import { UserPlus, ArrowRight } from "lucide-react";
+import { useInstructors } from "@/hooks/useStaff";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 
 export default function FacultyDirectoryPage() {
+    const { data: instructors, isLoading } = useInstructors();
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -13,17 +27,52 @@ export default function FacultyDirectoryPage() {
                         Manage your teaching staff and instructors
                     </p>
                 </div>
-                <Link
-                    href="/dashboard/faculty/onboarding"
-                    className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-lg shadow-indigo-500/20 transition-all hover:scale-105"
-                >
-                    <UserPlus className="h-5 w-5" />
-                    Recruit Faculty
-                </Link>
             </div>
 
-            <div className="bg-white dark:bg-slate-950 rounded-3xl border border-slate-200 dark:border-slate-800 p-8 text-center text-slate-500">
-                <p>Instructor List Component will go here.</p>
+            <div className="bg-white dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Designation</TableHead>
+                            <TableHead>Employee ID</TableHead>
+                            <TableHead>Specialization</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {isLoading && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center py-8">Loading faculty...</TableCell>
+                            </TableRow>
+                        )}
+                        {!isLoading && instructors?.map((instructor) => (
+                            <TableRow key={instructor.id}>
+                                <TableCell className="font-medium">
+                                    {instructor.staff_member.profile_details.first_name} {instructor.staff_member.profile_details.last_name}
+                                </TableCell>
+                                <TableCell>{instructor.staff_member.designation}</TableCell>
+                                <TableCell>{instructor.staff_member.employee_id}</TableCell>
+                                <TableCell>{instructor.specialization}</TableCell>
+                                <TableCell className="text-right">
+                                    <Link href={`/dashboard/instructors/${instructor.id}`}>
+                                        <Button variant="ghost" size="sm" className="gap-2">
+                                            View Profile
+                                            <ArrowRight className="h-4 w-4" />
+                                        </Button>
+                                    </Link>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                        {!isLoading && (!instructors || instructors.length === 0) && (
+                            <TableRow>
+                                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                                    No instructors found. Recruit some!
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
             </div>
         </div>
     );

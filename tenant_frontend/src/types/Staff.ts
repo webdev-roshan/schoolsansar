@@ -66,13 +66,7 @@ export interface ProfileDetails {
 
 export interface Instructor {
     id: string; // ID of the Instructor record
-    staff_member: {
-        id: string; // ID of the StaffMember record
-        employee_id: string;
-        designation: string;
-        joining_date: string;
-        profile_details: ProfileDetails;
-    };
+    staff_member: StaffMember;
     specialization: string;
     bio: string;
 }

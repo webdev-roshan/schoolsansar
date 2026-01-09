@@ -65,8 +65,21 @@ class StudentLevel(models.Model):
     student = models.ForeignKey(
         Student, on_delete=models.CASCADE, related_name="enrollments"
     )
-    level = models.CharField(max_length=50)  # e.g., Grade 10
-    section = models.CharField(max_length=10, blank=True)
+    # Link to the Academic Structure
+    level = models.ForeignKey(
+        "academics.AcademicLevel",
+        on_delete=models.PROTECT,
+        related_name="student_enrollments",
+        null=True,  # Temporarily null for migration safety if needed, or strict if new
+    )
+    section = models.ForeignKey(
+        "academics.Section",
+        on_delete=models.SET_NULL,
+        related_name="student_enrollments",
+        null=True,
+        blank=True,
+    )
+
     academic_year = models.CharField(max_length=20)  # e.g., 2081 or 2024
     is_current = models.BooleanField(default=True)
 

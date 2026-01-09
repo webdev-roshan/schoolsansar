@@ -37,6 +37,7 @@ TENANT_APPS = (
     "students",
     "staff",
     "families",
+    "academics",
 )
 
 INSTALLED_APPS = list(SHARED_APPS) + [

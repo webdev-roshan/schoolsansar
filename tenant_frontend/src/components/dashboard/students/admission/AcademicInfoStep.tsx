@@ -1,6 +1,3 @@
-"use client";
-
-import React from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { FloatingLabelInput } from '@/components/ui/floating-label-input';
 import {
@@ -11,6 +8,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { useAcademicLevels, useSections } from '@/hooks/useAcademics'; // Import hooks
 
 interface AcademicInfoStepProps {
     form: UseFormReturn<any>;
@@ -19,35 +17,67 @@ interface AcademicInfoStepProps {
 export default function AcademicInfoStep({ form }: AcademicInfoStepProps) {
     const { register, formState: { errors }, setValue, watch } = form;
 
+    // Fetch dynamic academic data
+    const { data: levels, isLoading: isLoadingLevels } = useAcademicLevels();
+    const { data: allSections } = useSections();
+
+    const selectedLevelId = watch('level_id');
+
+    // Filter sections for the selected level
+    const availableSections = allSections?.filter(s => s.level === selectedLevelId) || [];
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                     <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500 ml-1">Enrolling Into Grade/Level</Label>
                     <Select
-                        onValueChange={(val) => setValue('level', val)}
-                        defaultValue={watch('level')}
+                        onValueChange={(val) => {
+                            setValue('level_id', val);
+                            setValue('section_id', ''); // Reset section when level changes
+                        }}
+                        defaultValue={watch('level_id')}
                     >
                         <SelectTrigger className="h-12 rounded-xl border-slate-200 focus:ring-sky-500 bg-white dark:bg-slate-900 shadow-sm">
-                            <SelectValue placeholder="Select Level" />
+                            <SelectValue placeholder={isLoadingLevels ? "Loading levels..." : "Select Level"} />
                         </SelectTrigger>
                         <SelectContent className="rounded-xl border-slate-200">
-                            <SelectItem value="Playgroup">Playgroup</SelectItem>
-                            <SelectItem value="Nursery">Nursery</SelectItem>
-                            <SelectItem value="LKG">LKG</SelectItem>
-                            <SelectItem value="UKG">UKG</SelectItem>
-                            {Array.from({ length: 12 }, (_, i) => (
-                                <SelectItem key={i + 1} value={`Grade ${i + 1}`}>Grade {i + 1}</SelectItem>
+                            {levels?.map((level) => (
+                                <SelectItem key={level.id} value={level.id}>
+                                    {level.program_name} - {level.name}
+                                </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
-                    {errors.level && <p className="text-xs font-semibold text-red-500 px-1">{errors.level.message as string}</p>}
+                    {errors.level_id && <p className="text-xs font-semibold text-red-500 px-1">{errors.level_id.message as string}</p>}
                 </div>
-                <FloatingLabelInput
-                    id="section"
-                    label="Section (Optional)"
-                    {...register('section')}
-                />
+
+                <div className="space-y-2">
+                    <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500 ml-1">Section (Optional)</Label>
+                    <Select
+                        onValueChange={(val) => setValue('section_id', val)}
+                        defaultValue={watch('section_id')}
+                        disabled={!selectedLevelId || availableSections.length === 0}
+                    >
+                        <SelectTrigger className="h-12 rounded-xl border-slate-200 focus:ring-sky-500 bg-white dark:bg-slate-900 shadow-sm">
+                            <SelectValue placeholder={
+                                !selectedLevelId
+                                    ? "Select Level First"
+                                    : availableSections.length === 0
+                                        ? "No Sections Found"
+                                        : "Select Section"
+                            } />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl border-slate-200">
+                            {availableSections.map((section) => (
+                                <SelectItem key={section.id} value={section.id}>
+                                    {section.name} (Cap: {section.capacity})
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {errors.section_id && <p className="text-xs font-semibold text-red-500 px-1">{errors.section_id.message as string}</p>}
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -10,6 +10,9 @@ from django_tenants.utils import tenant_context, get_public_schema_name
 User = apps.get_model("accounts", "User")
 
 
+from academics.models import AcademicLevel, Section
+
+
 class StudentEnrollmentSerializer(serializers.Serializer):
     # Basic Info for Profile
     first_name = serializers.CharField(max_length=100)
@@ -27,8 +30,8 @@ class StudentEnrollmentSerializer(serializers.Serializer):
     address = serializers.CharField(required=False, allow_blank=True)
 
     # Academic Info
-    level = serializers.CharField(max_length=50)
-    section = serializers.CharField(max_length=10, required=False, allow_blank=True)
+    level_id = serializers.UUIDField()
+    section_id = serializers.UUIDField(required=False, allow_null=True)
     academic_year = serializers.CharField(max_length=20)
     admission_date = serializers.DateField(required=False, allow_null=True)
     previous_school = serializers.CharField(required=False, allow_blank=True)
@@ -46,9 +49,21 @@ class StudentEnrollmentSerializer(serializers.Serializer):
             pass
         return value
 
+    def validate_level_id(self, value):
+        if not AcademicLevel.objects.filter(id=value).exists():
+            raise serializers.ValidationError("Academic Level not found")
+        return value
+
+    def validate_section_id(self, value):
+        if value and not Section.objects.filter(id=value).exists():
+            raise serializers.ValidationError("Section not found")
+        return value
+
     @transaction.atomic
     def create(self, validated_data):
         parents_data = validated_data.pop("parents", [])
+        level_id = validated_data.pop("level_id")
+        section_id = validated_data.pop("section_id", None)
 
         # 1. Create Identity Profile (No login credentials yet)
         profile = Profile.objects.create(
@@ -79,10 +94,13 @@ class StudentEnrollmentSerializer(serializers.Serializer):
             )
 
         # 5. Create Initial Level Placement
+        level = AcademicLevel.objects.get(id=level_id)
+        section = Section.objects.get(id=section_id) if section_id else None
+
         StudentLevel.objects.create(
             student=student,
-            level=validated_data["level"],
-            section=validated_data.get("section", ""),
+            level=level,
+            section=section,
             academic_year=validated_data["academic_year"],
             is_current=True,
         )
@@ -137,31 +155,38 @@ class StudentEnrollmentSerializer(serializers.Serializer):
         # 3. Update or Create Level Info
         # We try to update the CURRENT level
         current_level = instance.enrollments.filter(is_current=True).first()
-        if (
-            "level" in validated_data
-            or "section" in validated_data
-            or "academic_year" in validated_data
-        ):
+
+        new_level_id = validated_data.get("level_id")
+        new_section_id = validated_data.get("section_id")
+
+        if new_level_id or new_section_id or "academic_year" in validated_data:
             if current_level:
-                current_level.level = validated_data.get("level", current_level.level)
-                current_level.section = validated_data.get(
-                    "section", current_level.section
-                )
+                if new_level_id:
+                    current_level.level = AcademicLevel.objects.get(id=new_level_id)
+                if new_section_id:
+                    current_level.section = Section.objects.get(id=new_section_id)
+
                 current_level.academic_year = validated_data.get(
                     "academic_year", current_level.academic_year
                 )
                 current_level.save()
             else:
-                # Fallback if no current level exists (shouldn't happen but safe)
-                StudentLevel.objects.create(
-                    student=instance,
-                    level=validated_data.get("level", "N/A"),
-                    section=validated_data.get("section", ""),
-                    academic_year=validated_data.get(
-                        "academic_year", ""
-                    ),  # You might want a default current year logic here
-                    is_current=True,
+                # Fallback if no current level exists
+                level = (
+                    AcademicLevel.objects.get(id=new_level_id) if new_level_id else None
                 )
+                section = (
+                    Section.objects.get(id=new_section_id) if new_section_id else None
+                )
+
+                if level:
+                    StudentLevel.objects.create(
+                        student=instance,
+                        level=level,
+                        section=section,
+                        academic_year=validated_data.get("academic_year", ""),
+                        is_current=True,
+                    )
 
         # 4. Handle Parents - TODO: Complex Nested Update
         # For now, we skip updating parents via this endpoint to avoid complexity

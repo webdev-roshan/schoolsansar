@@ -56,8 +56,10 @@ class StudentListView(APIView):
                     "last_name": s.profile.last_name,
                     "full_name": f"{s.profile.first_name} {s.profile.middle_name + ' ' if s.profile.middle_name else ''}{s.profile.last_name}",
                     "enrollment_id": s.enrollment_id,
-                    "level": current.level if current else "N/A",
-                    "section": current.section if current else "N/A",
+                    "level": current.level.name if current and current.level else "N/A",
+                    "section": (
+                        current.section.name if current and current.section else "N/A"
+                    ),
                     "status": s.status,
                     "has_account": s.profile.user_id is not None,
                 }
@@ -216,8 +218,12 @@ class StudentDetailView(APIView):
             "phone": student.profile.phone,
             "address": student.profile.address,
             # Academic
-            "level": current.level if current else "",
-            "section": current.section if current else "",
+            "level_id": current.level.id if current and current.level else None,
+            "section_id": current.section.id if current and current.section else None,
+            "level": (
+                current.level.name if current and current.level else ""
+            ),  # Keep legacy for display if needed
+            "section": current.section.name if current and current.section else "",
             "academic_year": current.academic_year if current else "",
             "admission_date": student.admission_date,
             "parents": parents_data,  # Include parents for editing

@@ -34,8 +34,8 @@ const enrollmentSchema = z.object({
     address: z.string().min(1, "Current address is required"),
 
     // Academic Info
-    level: z.string().min(1, "Grade level is required"),
-    section: z.string().optional(),
+    level_id: z.string().min(1, "Grade level is required"),
+    section_id: z.string().optional(),
     academic_year: z.string().min(1, "Academic year is required"),
     admission_date: z.string().optional().or(z.literal("")).transform(val => val === "" ? undefined : val),
     previous_school: z.string().optional(),

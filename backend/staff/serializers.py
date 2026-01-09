@@ -401,3 +401,10 @@ class StaffMemberUpdateSerializer(serializers.ModelSerializer):
             profile.save()
 
         return instance
+
+
+class InstructorDetailSerializer(InstructorSerializer):
+    staff_member = StaffMemberSerializer(read_only=True)
+
+    class Meta(InstructorSerializer.Meta):
+        fields = "__all__"

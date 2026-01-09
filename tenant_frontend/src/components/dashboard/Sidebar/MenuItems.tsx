@@ -65,12 +65,12 @@ export const getMenuItems = (user: any, can: (permission: string) => boolean): S
     // 4. Instructors (Academic Faculty)
     const instructorChildren: SidebarItemType[] = [];
     if (can("view_staff") || can("view_student")) {
-        instructorChildren.push({ label: "Instructors Directory", href: "/dashboard/instructors" });
+        instructorChildren.push({ label: "Faculty Directory", href: "/dashboard/instructors" });
     }
 
     if (instructorChildren.length > 0) {
         menuItems.push({
-            label: "Instructors",
+            label: "Faculty",
             icon: School,
             children: instructorChildren
         });
@@ -78,7 +78,10 @@ export const getMenuItems = (user: any, can: (permission: string) => boolean): S
 
     // 5. Academics
     const academicChildren: SidebarItemType[] = [];
-    academicChildren.push({ label: "Courses & Classes", href: "/dashboard/courses" });
+
+    if (can("view_program") || can("view_academic_level")) {
+        academicChildren.push({ label: "Academic Structure", href: "/dashboard/academics" });
+    }
 
     if (academicChildren.length > 0) {
         menuItems.push({

@@ -87,6 +87,8 @@ export const useActivateStaff = () => {
 
 // === LISTING ===
 
+// === LISTING ===
+
 export const useInstructors = () => {
     return useQuery({
         queryKey: ["instructors"],
@@ -94,6 +96,17 @@ export const useInstructors = () => {
             const response = await axiosInstance.get("/staff/instructors/");
             return response.data as Instructor[];
         }
+    });
+};
+
+export const useInstructor = (id: string) => {
+    return useQuery({
+        queryKey: ["instructors", id],
+        queryFn: async () => {
+            const response = await axiosInstance.get(`/staff/instructors/${id}/`);
+            return response.data as Instructor;
+        },
+        enabled: !!id
     });
 };
 
@@ -153,6 +166,44 @@ export const useDeleteStaff = () => {
         },
         onError: (error: any) => {
             const message = error.response?.data?.message || "Failed to delete staff member";
+            toast.error(message);
+        }
+    });
+};
+
+export const useUpdateInstructor = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, data }: { id: string | number; data: any }) => {
+            const response = await axiosInstance.patch(`/staff/instructors/${id}/`, data);
+            return response.data;
+        },
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["instructors"] });
+            queryClient.invalidateQueries({ queryKey: ["instructors", variables.id.toString()] });
+            toast.success("Instructor updated successfully");
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.message || "Failed to update instructor";
+            toast.error(message);
+        }
+    });
+};
+
+export const useDeleteInstructor = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: string | number) => {
+            await axiosInstance.delete(`/staff/instructors/${id}/`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["instructors"] });
+            toast.success("Instructor deleted successfully");
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.message || "Failed to delete instructor";
             toast.error(message);
         }
     });
