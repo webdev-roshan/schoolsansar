@@ -86,7 +86,7 @@ export default function StudentsPage() {
                     {(isOwner || can("add_student")) && (
                         <>
                             <Button
-                                onClick={() => router.push("/dashboard/students/portal-activation")}
+                                onClick={() => router.push("/dashboard/portal-access/students")}
                                 variant="outline"
                                 size="xl"
                             >

@@ -24,6 +24,46 @@ export interface InstructorActivationData {
     email?: string;
 }
 
+export interface StaffOnboardingData {
+    // Personal Info
+    first_name: string;
+    middle_name?: string;
+    last_name: string;
+    gender: 'male' | 'female' | 'other';
+    date_of_birth?: string;
+    phone?: string;
+    address?: string;
+    email?: string;
+
+    // Professional Info
+    designation: string; // Required for generic staff
+    department?: string;
+    joining_date?: string;
+    qualification?: string;
+    experience_years?: number;
+}
+
+export interface StaffActivationData {
+    staff_id: string;
+    username: string;
+    password?: string;
+    email?: string;
+    role_slug: string; // Required for generic staff activation
+}
+
+export interface ProfileDetails {
+    first_name: string;
+    middle_name?: string;
+    last_name: string;
+    gender: string;
+    date_of_birth?: string;
+    phone: string;
+    email: string; // Global user email
+    address?: string;
+    user_id?: string; // If null, not activated
+    local_username?: string;
+}
+
 export interface Instructor {
     id: string; // ID of the Instructor record
     staff_member: {
@@ -31,14 +71,7 @@ export interface Instructor {
         employee_id: string;
         designation: string;
         joining_date: string;
-        profile_details: {
-            first_name: string;
-            middle_name?: string;
-            last_name: string;
-            phone: string;
-            email: string; // Global user email
-            user_id?: string; // If null, not activated
-        };
+        profile_details: ProfileDetails;
     };
     specialization: string;
     bio: string;
@@ -50,12 +83,7 @@ export interface StaffMember {
     designation: string;
     department: string;
     joining_date: string;
-    profile_details: {
-        first_name: string;
-        middle_name?: string;
-        last_name: string;
-        phone: string;
-        email: string;
-        user_id?: string;
-    };
+    qualification?: string;
+    experience_years?: number;
+    profile_details: ProfileDetails;
 }

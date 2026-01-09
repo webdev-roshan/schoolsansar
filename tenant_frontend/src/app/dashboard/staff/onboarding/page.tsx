@@ -1,5 +1,5 @@
-import InstructorOnboardingWizard from "@/components/dashboard/staff/InstructorOnboardingWizard";
+import StaffOnboardingWizard from "@/components/dashboard/staff/StaffOnboardingWizard";
 
 export default function OnboardingPage() {
-    return <InstructorOnboardingWizard />;
+    return <StaffOnboardingWizard />;
 }

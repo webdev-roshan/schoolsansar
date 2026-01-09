@@ -6,6 +6,8 @@ from .views import (
     InstructorOnboardingView,
     InstructorActivationView,
     CredentialDistributionView,
+    StaffOnboardingView,
+    StaffActivationView,
 )
 
 router = DefaultRouter()
@@ -22,6 +24,16 @@ urlpatterns = [
         "activate-instructor/",
         InstructorActivationView.as_view(),
         name="instructor-activate",
+    ),
+    path(
+        "onboard-staff/",
+        StaffOnboardingView.as_view(),
+        name="staff-onboard",
+    ),
+    path(
+        "activate-staff/",
+        StaffActivationView.as_view(),
+        name="staff-activate",
     ),
     path(
         "credential-distribution/",

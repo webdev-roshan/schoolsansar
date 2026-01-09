@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axiosInstance from "@/lib/axios";
 import { toast } from "sonner";
-import { InstructorOnboardingData, InstructorActivationData, Instructor, StaffMember } from "../types/Staff";
-export type { InstructorOnboardingData, InstructorActivationData, Instructor, StaffMember };
+import { InstructorOnboardingData, InstructorActivationData, Instructor, StaffMember, StaffActivationData, StaffOnboardingData } from "../types/Staff";
+export type { InstructorOnboardingData, InstructorActivationData, Instructor, StaffMember, StaffActivationData, StaffOnboardingData };
 
 // === ONBOARDING (HIRING) ===
 
@@ -21,6 +21,25 @@ export const useOnboardInstructor = () => {
         },
         onError: (error: any) => {
             const message = error.response?.data?.message || "Failed to onboard instructor";
+            toast.error(message);
+        }
+    });
+};
+
+export const useOnboardStaff = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: any) => {
+            const response = await axiosInstance.post("/staff/onboard-staff/", data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["staff"] });
+            toast.success("Staff member onboarded successfully!");
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.message || "Failed to onboard staff";
             toast.error(message);
         }
     });
@@ -47,6 +66,25 @@ export const useActivateInstructor = () => {
     });
 };
 
+export const useActivateStaff = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (data: any) => {
+            const response = await axiosInstance.post("/staff/activate-staff/", data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["staff"] });
+            toast.success("Staff account activated successfully!");
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.message || "Failed to activate staff";
+            toast.error(message);
+        }
+    });
+};
+
 // === LISTING ===
 
 export const useInstructors = () => {
@@ -68,13 +106,77 @@ export const useStaffMembers = () => {
         }
     });
 };
+
+export const useStaffMember = (id: string) => {
+    return useQuery({
+        queryKey: ["staff", id],
+        queryFn: async () => {
+            const response = await axiosInstance.get(`/staff/members/${id}/`);
+            return response.data as StaffMember;
+        },
+        enabled: !!id
+    });
+};
+
+// === MANAGEMENT (EDIT / DELETE) ===
+
+export const useUpdateStaff = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, data }: { id: string; data: any }) => {
+            const response = await axiosInstance.patch(`/staff/members/${id}/`, data);
+            return response.data;
+        },
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["staff"] });
+            queryClient.invalidateQueries({ queryKey: ["staff", variables.id] });
+            toast.success("Staff member updated successfully");
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.message || "Failed to update staff member";
+            toast.error(message);
+        }
+    });
+};
+
+export const useDeleteStaff = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (id: string) => {
+            await axiosInstance.delete(`/staff/members/${id}/`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["staff"] });
+            toast.success("Staff member deleted successfully");
+        },
+        onError: (error: any) => {
+            const message = error.response?.data?.message || "Failed to delete staff member";
+            toast.error(message);
+        }
+    });
+};
+
+
 // === DISTRIBUTION ===
+
 
 export const usePendingStaffCredentials = () => {
     return useQuery({
         queryKey: ["staff-credentials"],
         queryFn: async () => {
             const response = await axiosInstance.get("/staff/credential-distribution/");
+            return response.data;
+        }
+    });
+};
+
+export const useRoles = () => {
+    return useQuery({
+        queryKey: ["roles"],
+        queryFn: async () => {
+            const response = await axiosInstance.get("/roles/");
             return response.data;
         }
     });

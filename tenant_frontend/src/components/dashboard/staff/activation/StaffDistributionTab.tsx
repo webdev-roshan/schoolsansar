@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/table";
 import { toast } from "sonner";
 
-export default function DistributionTab() {
+export default function StaffDistributionTab() {
+    // using the generic staff credentials hook
     const { data: pendingCreds, isLoading: loadingCreds } = usePendingStaffCredentials();
     const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
 
@@ -47,7 +48,7 @@ export default function DistributionTab() {
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="space-y-1">
                             <CardTitle className="text-2xl">
-                                Unclaimed Credentials
+                                Unclaimed Staff Credentials
                             </CardTitle>
                             <CardDescription className="text-base">
                                 List of staff members who haven't performed their first security reset yet.
@@ -74,7 +75,7 @@ export default function DistributionTab() {
                                 <div className="p-6 bg-emerald-50 dark:bg-emerald-900/10 rounded-full">
                                     <CircleCheck className="h-12 w-12 text-emerald-500" />
                                 </div>
-                                <p className="font-medium">All staff have successfully changed their passwords!</p>
+                                <p className="font-medium">All pending staff have successfully activated their accounts!</p>
                             </div>
                         ) : (
                             <Table>

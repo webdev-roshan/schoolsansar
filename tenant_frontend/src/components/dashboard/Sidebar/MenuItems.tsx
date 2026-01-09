@@ -36,11 +36,6 @@ export const getMenuItems = (user: any, can: (permission: string) => boolean): S
     if (can("add_student")) {
         studentChildren.push({ label: "Admissions", href: "/dashboard/students/admissions" });
     }
-    if (can("activate_student_portal")) {
-        studentChildren.push({ label: "Portal Access", href: "/dashboard/students/portal-activation" });
-    }
-    // Future: Attendance
-    // studentChildren.push({ label: "Attendance", href: "/dashboard/students/attendance" });
 
     if (studentChildren.length > 0) {
         menuItems.push({
@@ -50,35 +45,40 @@ export const getMenuItems = (user: any, can: (permission: string) => boolean): S
         });
     }
 
-    // 3. Human Resources (Staff & Instructors) -> Focus on Employment
-    const hrChildren: SidebarItemType[] = [];
+    // 3. Staff (Operational HR)
+    const staffChildren: SidebarItemType[] = [];
     if (can("view_staff")) {
-        hrChildren.push({ label: "Staff Directory", href: "/dashboard/staff" }); // Updated to correct route
+        staffChildren.push({ label: "Staff Directory", href: "/dashboard/staff" });
     }
     if (can("add_staff")) {
-        hrChildren.push({ label: "Recruitment", href: "/dashboard/staff/onboarding" });
+        staffChildren.push({ label: "Recruit Staff", href: "/dashboard/hr/recruit" });
     }
-    if (can("activate_staff_portal")) {
-        hrChildren.push({ label: "Portal Access", href: "/dashboard/staff/activation" });
-    }
-    // Future: Payroll
-    // hrChildren.push({ label: "Payroll", href: "/dashboard/hr/payroll" });
 
-    if (hrChildren.length > 0) {
+    if (staffChildren.length > 0) {
         menuItems.push({
-            label: "Human Resources",
+            label: "Staff",
             icon: Briefcase,
-            children: hrChildren
+            children: staffChildren
         });
     }
 
-    // 4. Academics (The "Work" of Instructors) -> Focus on Teaching
+    // 4. Instructors (Academic Faculty)
+    const instructorChildren: SidebarItemType[] = [];
+    if (can("view_staff") || can("view_student")) {
+        instructorChildren.push({ label: "Instructors Directory", href: "/dashboard/instructors" });
+    }
+
+    if (instructorChildren.length > 0) {
+        menuItems.push({
+            label: "Instructors",
+            icon: School,
+            children: instructorChildren
+        });
+    }
+
+    // 5. Academics
     const academicChildren: SidebarItemType[] = [];
-    // Currently placeholders, but this is where your "Heavy" instructor modules will grow
     academicChildren.push({ label: "Courses & Classes", href: "/dashboard/courses" });
-    academicChildren.push({ label: "Examinations", href: "/dashboard/exams" });
-    // Future: Timetable, Syllabus, Assignments, Live Classes
-    // academicChildren.push({ label: "Live Classes", href: "/dashboard/academics/live" });
 
     if (academicChildren.length > 0) {
         menuItems.push({
@@ -88,7 +88,24 @@ export const getMenuItems = (user: any, can: (permission: string) => boolean): S
         });
     }
 
-    // 5. Administration (Settings, Roles, Families)
+    // 6. Portal Access (Restored)
+    const accessChildren: SidebarItemType[] = [];
+    if (can("activate_student_portal")) {
+        accessChildren.push({ label: "Student Portal", href: "/dashboard/portal-access/students" });
+    }
+    if (can("activate_staff_portal")) {
+        accessChildren.push({ label: "Staff Portal", href: "/dashboard/portal-access/staff" });
+    }
+
+    if (accessChildren.length > 0) {
+        menuItems.push({
+            label: "Portal Access",
+            icon: Lock,
+            children: accessChildren
+        });
+    }
+
+    // 7. Administration
     const adminChildren: SidebarItemType[] = [];
 
     if (can("view_institution_profile")) {
@@ -102,9 +119,6 @@ export const getMenuItems = (user: any, can: (permission: string) => boolean): S
     if (can("view_family")) {
         adminChildren.push({ label: "Family Accounts", href: "/dashboard/institution/families" });
     }
-
-    // Future: Transport, Fees (Could be separate Finance module)
-    // adminChildren.push({ label: "Transport", href: "/dashboard/admin/transport", icon: Bus });
 
     if (adminChildren.length > 0) {
         menuItems.push({

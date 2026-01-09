@@ -18,7 +18,20 @@ class StaffMemberViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ["list", "retrieve"]:
             return [permissions.IsAuthenticated(), HasPermission("view_staff")]
-        return [permissions.IsAuthenticated(), HasPermission("manage_staff")]
+        if self.action == "create":
+            return [permissions.IsAuthenticated(), HasPermission("add_staff")]
+        if self.action in ["update", "partial_update"]:
+            return [permissions.IsAuthenticated(), HasPermission("change_staff")]
+        if self.action == "destroy":
+            return [permissions.IsAuthenticated(), HasPermission("delete_staff")]
+        return [permissions.IsAuthenticated(), HasPermission("view_staff")]
+
+    def get_serializer_class(self):
+        if self.action in ["update", "partial_update"]:
+            from .serializers import StaffMemberUpdateSerializer
+
+            return StaffMemberUpdateSerializer
+        return StaffMemberSerializer
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -61,7 +74,17 @@ class StaffMemberViewSet(viewsets.ModelViewSet):
 class InstructorViewSet(viewsets.ModelViewSet):
     queryset = Instructor.objects.all().select_related("staff_member__profile")
     serializer_class = InstructorSerializer
-    permission_classes = [permissions.IsAuthenticated, HasPermission("manage_staff")]
+
+    def get_permissions(self):
+        if self.action in ["list", "retrieve"]:
+            return [permissions.IsAuthenticated(), HasPermission("view_staff")]
+        if self.action == "create":
+            return [permissions.IsAuthenticated(), HasPermission("add_staff")]
+        if self.action in ["update", "partial_update"]:
+            return [permissions.IsAuthenticated(), HasPermission("change_staff")]
+        if self.action == "destroy":
+            return [permissions.IsAuthenticated(), HasPermission("delete_staff")]
+        return [permissions.IsAuthenticated(), HasPermission("view_staff")]
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
@@ -201,3 +224,57 @@ class CredentialDistributionView(APIView):
                 )
 
         return Response(data)
+
+
+class StaffOnboardingView(APIView):
+    """
+    Phase 1: 'Hiring' a General Staff Member.
+    Creates a Profile and StaffMember record without a User login.
+    """
+
+    permission_classes = [permissions.IsAuthenticated, HasPermission("add_staff")]
+
+    def post(self, request):
+        from .serializers import StaffOnboardingSerializer
+
+        serializer = StaffOnboardingSerializer(data=request.data)
+        if serializer.is_valid():
+            staff = serializer.save()
+            return Response(
+                {
+                    "message": "Staff member onboarded successfully",
+                    "staff_id": staff.id,
+                    "employee_id": staff.employee_id,
+                    "name": f"{staff.profile.first_name} {staff.profile.last_name}",
+                    "designation": staff.designation,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StaffActivationView(APIView):
+    """
+    Phase 2: 'IT Access' for General Staff.
+    Creates a User account for an existing Staff member and assigns a Role.
+    """
+
+    permission_classes = [
+        permissions.IsAuthenticated,
+        HasPermission("activate_staff_portal"),
+    ]
+
+    def post(self, request):
+        from .serializers import StaffActivationSerializer
+
+        serializer = StaffActivationSerializer(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(
+                {
+                    "message": "Staff account activated successfully",
+                    "username": user.username,
+                },
+                status=status.HTTP_201_CREATED,
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

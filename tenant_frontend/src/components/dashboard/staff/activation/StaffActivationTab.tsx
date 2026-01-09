@@ -3,8 +3,9 @@
 import { useState } from "react";
 import {
     useStaffMembers,
-    useActivateInstructor,
-    InstructorActivationData,
+    useActivateStaff,
+    useRoles,
+    StaffActivationData,
     StaffMember
 } from "@/hooks/useStaff";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,13 @@ import {
     TableRow
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -41,15 +49,16 @@ interface ActivationTabProps {
     onSuccess: () => void;
 }
 
-export default function ActivationTab({ onSuccess }: ActivationTabProps) {
+export default function StaffActivationTab({ onSuccess }: ActivationTabProps) {
     // Queries
     const { data: allStaff, isLoading: loadingStaff } = useStaffMembers();
-    const { mutateAsync: activatePortal, isPending } = useActivateInstructor();
+    const { data: roles, isLoading: loadingRoles } = useRoles();
+    const { mutateAsync: activatePortal, isPending } = useActivateStaff();
 
-    // Filter for staff/instructors who do NOT have a user_id
+    // Filter for staff who do NOT have a user_id
     const unactivatedStaff = allStaff?.filter(s => !s.profile_details.user_id) || [];
 
-    const [selections, setSelections] = useState<InstructorActivationData[]>([]);
+    const [selections, setSelections] = useState<StaffActivationData[]>([]);
     const [errors, setErrors] = useState<any[]>([]);
 
     // Passwords Generation helper
@@ -62,7 +71,7 @@ export default function ActivationTab({ onSuccess }: ActivationTabProps) {
         return password;
     };
 
-    const generateCredentials = (staff: StaffMember): InstructorActivationData => {
+    const generateCredentials = (staff: StaffMember): StaffActivationData => {
         // Generate username: firstname + surname
         const parts = [
             staff.profile_details.first_name.toLowerCase(),
@@ -72,10 +81,19 @@ export default function ActivationTab({ onSuccess }: ActivationTabProps) {
 
         const username = parts.join('').replace(/\s+/g, '');
 
+        // Auto-match role based on designation
+        let preSelectedRole = "";
+        if (roles?.results || Array.isArray(roles)) {
+            const list = roles.results || roles;
+            const match = list.find((r: any) => r.name.toLowerCase() === staff.designation.toLowerCase());
+            if (match) preSelectedRole = match.slug;
+        }
+
         return {
             staff_id: staff.id,
             username: username,
             password: generateUniquePassword(),
+            role_slug: preSelectedRole,
         };
     };
 
@@ -86,11 +104,15 @@ export default function ActivationTab({ onSuccess }: ActivationTabProps) {
 
     const addAllStaff = () => {
         if (!unactivatedStaff) return;
+        // Don't auto-add everyone to selection because role selection is mandatory and unique per person mostly
+        // But we can add them, they will just show invalid state if we had validation.
+        // For now, let's allow it but they must pick roles.
         const newSelections = unactivatedStaff.map(s => generateCredentials(s));
         setSelections(newSelections);
+        toast.info("Added all staff. Please select a role for each member.");
     };
 
-    const updateSelection = (id: string, field: keyof InstructorActivationData, value: string) => {
+    const updateSelection = (id: string, field: keyof StaffActivationData, value: string) => {
         setSelections(selections.map(s => s.staff_id === id ? { ...s, [field]: value } : s));
     };
 
@@ -104,8 +126,14 @@ export default function ActivationTab({ onSuccess }: ActivationTabProps) {
             return;
         }
 
+        // Validate Roles
+        const missingRoles = selections.filter(s => !s.role_slug);
+        if (missingRoles.length > 0) {
+            toast.error(`Please select a role for all ${missingRoles.length} staff members.`);
+            return;
+        }
+
         const newErrors: any[] = [];
-        // Process sequentially (could be parallel but safer sequentially for error handling with single endpoints)
         for (let i = 0; i < selections.length; i++) {
             const item = selections[i];
             try {
@@ -188,7 +216,7 @@ export default function ActivationTab({ onSuccess }: ActivationTabProps) {
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
                                 <CardTitle className="text-2xl font-bold">Account Setup</CardTitle>
-                                <CardDescription>Generated accounts will require a password change on first login.</CardDescription>
+                                <CardDescription>Assign system roles and generate credentials.</CardDescription>
                             </div>
                             <div className="flex items-center gap-3">
                                 <Button
@@ -197,7 +225,7 @@ export default function ActivationTab({ onSuccess }: ActivationTabProps) {
                                     size="lg"
                                     disabled={!unactivatedStaff || unactivatedStaff.length === 0}
                                 >
-                                    Batch Generate
+                                    Batch Add
                                 </Button>
 
                                 <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 shadow-sm rounded-sm border border-blue-100 dark:border-blue-800">
@@ -220,10 +248,11 @@ export default function ActivationTab({ onSuccess }: ActivationTabProps) {
                                 <Table>
                                     <TableHeader className="bg-slate-50/80 dark:bg-slate-800/50">
                                         <TableRow className="border-b border-slate-200 dark:border-slate-800">
-                                            <TableHead className="pl-8 text-xs font-bold py-4 uppercase">Staff Member</TableHead>
-                                            <TableHead className="text-xs font-bold uppercase w-1/3">Username</TableHead>
-                                            <TableHead className="text-xs font-bold uppercase w-1/3">Temp Password</TableHead>
-                                            <TableHead className="w-16 pr-8"></TableHead>
+                                            <TableHead className="pl-6 text-xs font-bold py-4 uppercase w-[180px]">Staff Details</TableHead>
+                                            <TableHead className="text-xs font-bold uppercase w-[200px]">System Role</TableHead>
+                                            <TableHead className="text-xs font-bold uppercase">Username</TableHead>
+                                            <TableHead className="text-xs font-bold uppercase w-[150px]">Password</TableHead>
+                                            <TableHead className="w-12 pr-6"></TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -237,35 +266,55 @@ export default function ActivationTab({ onSuccess }: ActivationTabProps) {
                                                     "group transition-all duration-200 hover:bg-indigo-50/10",
                                                     error && "bg-red-50/40"
                                                 )}>
-                                                    <TableCell className="pl-8 py-5">
+                                                    <TableCell className="pl-6 py-5 align-top">
                                                         <p className="font-bold text-slate-900 dark:text-white truncate max-w-[150px]">{fullName}</p>
                                                         <p className="text-[10px] text-slate-400 font-mono italic truncate">{staff?.employee_id}</p>
+                                                        <p className="text-[10px] text-slate-500 truncate">{staff?.designation}</p>
                                                     </TableCell>
-                                                    <TableCell>
+                                                    <TableCell className="align-top">
+                                                        <Select
+                                                            value={item.role_slug}
+                                                            onValueChange={(value) => updateSelection(item.staff_id, "role_slug", value)}
+                                                        >
+                                                            <SelectTrigger className="h-9 w-full border-slate-200">
+                                                                <SelectValue placeholder="Select Role" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                {(roles?.results || (Array.isArray(roles) ? roles : []))?.map((role: any) => (
+                                                                    <SelectItem key={role.id} value={role.slug}>
+                                                                        {role.name}
+                                                                    </SelectItem>
+                                                                ))}
+
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </TableCell>
+                                                    <TableCell className="align-top">
                                                         <Input
                                                             value={item.username}
                                                             onChange={(e) => updateSelection(item.staff_id, "username", e.target.value)}
-                                                            className="h-10 text-sm border-slate-200 dark:border-slate-800 bg-white/50"
+                                                            className="h-9 text-xs border-slate-200 dark:border-slate-800 bg-white/50"
                                                         />
                                                     </TableCell>
-                                                    <TableCell>
+                                                    <TableCell className="align-top">
                                                         <div className="relative group/pass">
                                                             <Input
                                                                 value={item.password}
                                                                 type="text"
                                                                 onChange={(e) => updateSelection(item.staff_id, "password", e.target.value)}
-                                                                className="h-10 text-sm pr-10 border-indigo-200 bg-white/50"
+                                                                className="h-9 text-xs pr-8 border-indigo-200 bg-white/50 font-mono"
                                                             />
-                                                            <Key className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-indigo-300" />
+                                                            <Key className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-indigo-300" />
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell className="pr-8">
+                                                    <TableCell className="pr-6 align-top">
                                                         <Button
                                                             variant="destructive"
                                                             size="icon"
+                                                            className="h-8 w-8"
                                                             onClick={() => removeSelection(item.staff_id)}
                                                         >
-                                                            <Trash2 className="h-4 w-4" />
+                                                            <Trash2 className="h-3 w-3" />
                                                         </Button>
                                                     </TableCell>
                                                 </TableRow>
@@ -290,7 +339,7 @@ export default function ActivationTab({ onSuccess }: ActivationTabProps) {
                                 ) : (
                                     <>
                                         <ShieldCheck className="h-6 w-6 mr-3" />
-                                        Activate {selections.length} Staff Accounts
+                                        Activate & Assign Roles
                                     </>
                                 )}
                             </Button>
@@ -300,21 +349,23 @@ export default function ActivationTab({ onSuccess }: ActivationTabProps) {
             </div>
 
             {/* Error Reporting */}
-            {errors.length > 0 && (
-                <div className="bg-red-50/50 dark:bg-red-900/10 border-2 border-red-100 dark:border-red-900/30 rounded-3xl p-8 space-y-4">
-                    <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
-                        <TriangleAlert className="h-6 w-6" />
-                        <h3 className="text-xl font-bold">Process Conflicts</h3>
+            {
+                errors.length > 0 && (
+                    <div className="bg-red-50/50 dark:bg-red-900/10 border-2 border-red-100 dark:border-red-900/30 rounded-3xl p-8 space-y-4">
+                        <div className="flex items-center gap-3 text-red-600 dark:text-red-400">
+                            <TriangleAlert className="h-6 w-6" />
+                            <h3 className="text-xl font-bold">Process Conflicts</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {errors.map((err, i) => (
+                                <div key={i} className="bg-white dark:bg-slate-950 p-4 rounded-2xl border border-red-100 dark:border-red-900/20">
+                                    <p className="text-sm text-red-600 font-bold">Row {err.index + 1}: {JSON.stringify(err.error)}</p>
+                                </div>
+                            ))}
+                        </div>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {errors.map((err, i) => (
-                            <div key={i} className="bg-white dark:bg-slate-950 p-4 rounded-2xl border border-red-100 dark:border-red-900/20">
-                                <p className="text-sm text-red-600 font-bold">Row {err.index + 1}: {JSON.stringify(err.error)}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

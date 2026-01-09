@@ -31,13 +31,6 @@ export default function PortalActivationManager() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                 <div className="space-y-1">
-                    <button
-                        onClick={() => router.back()}
-                        className="flex cursor-pointer items-center gap-2 text-sm text-sky-600 mb-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to Directory
-                    </button>
                     <h1 className="text-3xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
                         Portal Activation
                     </h1>

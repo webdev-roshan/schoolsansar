@@ -1,14 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useStaffMembers, useInstructors } from "@/hooks/useStaff";
+import { useStaffMembers, useDeleteStaff } from "@/hooks/useStaff";
 import { usePermissions } from "@/providers/PermissionProvider";
 import { Button } from "@/components/ui/button";
 import {
-    Plus,
     Search,
     UserPlus,
-    Upload,
     MoreHorizontal,
     Filter,
     Briefcase,
@@ -29,17 +27,28 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useRouter } from "next/navigation";
 import Unauthorized from "@/components/Unauthorized";
-import { cn } from "@/lib/utils";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function StaffPage() {
     const { can, isOwner } = usePermissions();
     const { data: staff, isLoading } = useStaffMembers();
+    const { mutate: deleteStaff } = useDeleteStaff();
+    const [staffToDelete, setStaffToDelete] = useState<string | null>(null);
     const router = useRouter();
 
     const canView = isOwner || can("view_staff");
@@ -74,7 +83,7 @@ export default function StaffPage() {
                 <div className="flex items-center gap-3">
                     {(isOwner || canManagePortal) && (
                         <Button
-                            onClick={() => router.push("/dashboard/staff/activation")}
+                            onClick={() => router.push("/dashboard/portal-access/staff")}
                             variant="outline"
                             size="xl"
                         >
@@ -88,7 +97,7 @@ export default function StaffPage() {
                             size="xl"
                         >
                             <UserPlus className="h-4 w-4 mr-2" />
-                            Onboard Instructor
+                            Onboard Staff
                         </Button>
                     )}
                 </div>
@@ -173,7 +182,7 @@ export default function StaffPage() {
                                                 <DropdownMenuContent align="end" className="w-48 p-2 rounded-xl">
                                                     {canEdit && (
                                                         <DropdownMenuItem
-                                                            onClick={() => toast.info("Edit not implemented yet")}
+                                                            onClick={() => router.push(`/dashboard/staff/edit/${member.id}`)}
                                                             className="rounded-lg gap-2 cursor-pointer focus:bg-sky-50 focus:text-sky-600 dark:focus:bg-sky-900/20 dark:focus:text-sky-400"
                                                         >
                                                             <Pencil className="h-4 w-4" />
@@ -182,7 +191,7 @@ export default function StaffPage() {
                                                     )}
                                                     {canDelete && (
                                                         <DropdownMenuItem
-                                                            onClick={() => toast.info("Delete not implemented yet")}
+                                                            onClick={() => setStaffToDelete(member.id)}
                                                             className="rounded-lg gap-2 cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-900/20"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
@@ -208,7 +217,31 @@ export default function StaffPage() {
                     </Table>
                 </div>
             </div>
+
+            <AlertDialog open={!!staffToDelete} onOpenChange={(open) => !open && setStaffToDelete(null)}>
+                <AlertDialogContent className="rounded-3xl">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the staff member profile and their employment records from the system.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel className="rounded-xl h-11">Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (staffToDelete) {
+                                    deleteStaff(staffToDelete);
+                                    setStaffToDelete(null);
+                                }
+                            }}
+                            className="bg-red-600 hover:bg-red-700 text-white rounded-xl h-11"
+                        >
+                            Delete Staff
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
-import { toast } from "sonner";
