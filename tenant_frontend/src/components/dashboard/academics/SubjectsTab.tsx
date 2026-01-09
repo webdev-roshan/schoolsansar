@@ -1,20 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { useSubjects, useCreateSubject, useAcademicLevels } from "@/hooks/useAcademics";
+import { useSubjects, useAcademicLevels, useCreateSubject, useUpdateSubject, useDeleteSubject } from "@/hooks/useAcademics";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Plus, MoreHorizontal, Pencil, Trash2, BookOpen, LoaderCircle } from "lucide-react";
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
@@ -30,138 +30,279 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Subject } from "@/types/Academics";
 import { Badge } from "@/components/ui/badge";
 
 export default function SubjectsTab() {
-    const { data: subjects, isLoading } = useSubjects();
-    const { data: levels } = useAcademicLevels();
-    const { mutate: createSubject, isPending } = useCreateSubject();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const { data: subjects, isLoading: isLoadingSubjects } = useSubjects();
+    const { data: levels, isLoading: isLoadingLevels } = useAcademicLevels();
+    const { mutate: createSubject, isPending: isCreating } = useCreateSubject();
+    const { mutate: updateSubject, isPending: isUpdating } = useUpdateSubject();
+    const { mutate: deleteSubject } = useDeleteSubject();
 
-    const [selectedLevel, setSelectedLevel] = useState("");
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
+    const [subjectToDelete, setSubjectToDelete] = useState<string | null>(null);
     const [isElective, setIsElective] = useState(false);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
-
-        createSubject({
-            level: selectedLevel,
+        const data = {
+            level: formData.get("level"),
             name: formData.get("name"),
             code: formData.get("code"),
             credits: parseFloat(formData.get("credits") as string),
-            description: formData.get("description"),
             is_elective: isElective,
-        }, {
-            onSuccess: () => {
-                setIsDialogOpen(false);
-                setSelectedLevel("");
-            }
-        });
+            description: formData.get("description"),
+        };
+
+        if (editingSubject) {
+            updateSubject({ id: editingSubject.id, data }, {
+                onSuccess: () => {
+                    setIsDialogOpen(false);
+                    setEditingSubject(null);
+                    setIsElective(false);
+                }
+            });
+        } else {
+            createSubject(data, {
+                onSuccess: () => {
+                    setIsDialogOpen(false);
+                    setIsElective(false);
+                }
+            });
+        }
     };
 
-    if (isLoading) return <div>Loading...</div>;
+    const handleEdit = (subject: Subject) => {
+        setEditingSubject(subject);
+        setIsElective(subject.is_elective);
+        setIsDialogOpen(true);
+    };
+
+    const handleDelete = () => {
+        if (subjectToDelete) {
+            deleteSubject(subjectToDelete);
+            setSubjectToDelete(null);
+        }
+    };
+
+    const handleDialogClose = () => {
+        setIsDialogOpen(false);
+        setEditingSubject(null);
+        setIsElective(false);
+    };
+
+    if (isLoadingSubjects || isLoadingLevels) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <LoaderCircle className="h-8 w-8 animate-spin text-indigo-600" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Curriculum & Subjects</h3>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="gap-2">
-                            <Plus className="h-4 w-4" />
-                            Add Subject
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Add New Subject</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>Applicable Level</Label>
-                                <Select value={selectedLevel} onValueChange={setSelectedLevel} required>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Grade/Level" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {levels?.map((lvl) => (
-                                            <SelectItem key={lvl.id} value={lvl.id}>
-                                                {lvl.program_name} - {lvl.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Subject Name</Label>
-                                    <Input id="name" name="name" placeholder="e.g. Mathematics" required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="code">Course Code</Label>
-                                    <Input id="code" name="code" placeholder="e.g. MTH101" required />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="credits">Credits</Label>
-                                <Input id="credits" name="credits" type="number" step="0.5" defaultValue={1.0} required />
-                            </div>
-                            <div className="flex items-center space-x-2 pt-2">
-                                <Switch id="is-elective" checked={isElective} onCheckedChange={setIsElective} />
-                                <Label htmlFor="is-elective">Is Elective? (Optional for students)</Label>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="description">Description (Syllabus)</Label>
-                                <Textarea id="description" name="description" placeholder="Brief outline..." />
-                            </div>
-                            <div className="pt-4 flex justify-end">
-                                <Button type="submit" disabled={isPending || !selectedLevel}>
-                                    {isPending ? "Creating..." : "Create Subject"}
-                                </Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                <div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Subjects</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage subjects and courses</p>
+                </div>
+                <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    New Subject
+                </Button>
             </div>
 
-            <div className="border rounded-lg">
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>{editingSubject ? "Edit Subject" : "Create New Subject"}</DialogTitle>
+                        <DialogDescription>
+                            {editingSubject ? "Update subject information" : "Add a new subject to an academic level"}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="level">Academic Level</Label>
+                            <Select name="level" defaultValue={editingSubject?.level} required>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select level" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {levels?.map((level) => (
+                                        <SelectItem key={level.id} value={level.id}>
+                                            {level.program_name} - {level.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Subject Name</Label>
+                            <Input
+                                id="name"
+                                name="name"
+                                placeholder="e.g., Mathematics"
+                                defaultValue={editingSubject?.name}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="code">Subject Code</Label>
+                            <Input
+                                id="code"
+                                name="code"
+                                placeholder="e.g., MTH101"
+                                defaultValue={editingSubject?.code}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="credits">Credits</Label>
+                            <Input
+                                id="credits"
+                                name="credits"
+                                type="number"
+                                step="0.1"
+                                placeholder="e.g., 3.0"
+                                defaultValue={editingSubject?.credits}
+                                required
+                            />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="is_elective"
+                                checked={isElective}
+                                onCheckedChange={(checked) => setIsElective(checked as boolean)}
+                            />
+                            <Label htmlFor="is_elective" className="text-sm font-normal cursor-pointer">
+                                This is an elective subject
+                            </Label>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="description">Description</Label>
+                            <Textarea
+                                id="description"
+                                name="description"
+                                placeholder="Optional description..."
+                                defaultValue={editingSubject?.description}
+                            />
+                        </div>
+                        <div className="pt-4 flex justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={handleDialogClose}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isCreating || isUpdating}>
+                                {isCreating || isUpdating ? "Saving..." : editingSubject ? "Update" : "Create"}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden shadow-sm">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50">
                         <TableRow>
-                            <TableHead>Code</TableHead>
                             <TableHead>Subject Name</TableHead>
+                            <TableHead>Code</TableHead>
                             <TableHead>Level</TableHead>
                             <TableHead>Credits</TableHead>
                             <TableHead>Type</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {subjects?.map((subject) => (
-                            <TableRow key={subject.id}>
-                                <TableCell className="font-mono text-xs">{subject.code}</TableCell>
-                                <TableCell className="font-medium">{subject.name}</TableCell>
-                                <TableCell>{subject.level_name}</TableCell>
-                                <TableCell>{subject.credits}</TableCell>
-                                <TableCell>
-                                    {subject.is_elective ? (
-                                        <Badge variant="secondary">Elective</Badge>
-                                    ) : (
-                                        <Badge variant="outline">Core</Badge>
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                        {(!subjects || subjects.length === 0) && (
+                        {subjects && subjects.length > 0 ? (
+                            subjects.map((subject) => (
+                                <TableRow key={subject.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <TableCell className="font-medium">{subject.name}</TableCell>
+                                    <TableCell>
+                                        <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                                            {subject.code}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell className="text-slate-600 dark:text-slate-400">{subject.level_name}</TableCell>
+                                    <TableCell>
+                                        <span className="text-sm">{subject.credits}</span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge variant={subject.is_elective ? "secondary" : "outline"} className="text-xs">
+                                            {subject.is_elective ? "Elective" : "Core"}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => handleEdit(subject)}>
+                                                    <Pencil className="h-4 w-4 mr-2" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => setSubjectToDelete(subject.id)}
+                                                    className="text-red-600"
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                    No subjects found.
+                                <TableCell colSpan={6} className="h-32 text-center">
+                                    <div className="flex flex-col items-center justify-center text-slate-400">
+                                        <BookOpen className="h-12 w-12 mb-2 opacity-20" />
+                                        <p>No subjects found. Create one to get started.</p>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
                 </Table>
             </div>
+
+            <AlertDialog open={!!subjectToDelete} onOpenChange={() => setSubjectToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the subject.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

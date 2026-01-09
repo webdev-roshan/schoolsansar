@@ -32,6 +32,39 @@ export const useCreateProgram = () => {
     });
 };
 
+export const useUpdateProgram = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ id, data }: { id: string; data: any }) => {
+            const response = await axiosInstance.patch(`/academics/programs/${id}/`, data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["programs"] });
+            toast.success("Program updated successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to update program");
+        }
+    });
+};
+
+export const useDeleteProgram = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            await axiosInstance.delete(`/academics/programs/${id}/`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["programs"] });
+            toast.success("Program deleted successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to delete program");
+        }
+    });
+};
+
 // === LEVELS ===
 
 export const useAcademicLevels = () => {
@@ -53,11 +86,46 @@ export const useCreateLevel = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["levels"] });
-            queryClient.invalidateQueries({ queryKey: ["programs"] }); // Refresh programs to show new levels
+            queryClient.invalidateQueries({ queryKey: ["programs"] });
             toast.success("Academic Level created successfully");
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || "Failed to create level");
+        }
+    });
+};
+
+export const useUpdateLevel = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ id, data }: { id: string; data: any }) => {
+            const response = await axiosInstance.patch(`/academics/levels/${id}/`, data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["levels"] });
+            queryClient.invalidateQueries({ queryKey: ["programs"] });
+            toast.success("Level updated successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to update level");
+        }
+    });
+};
+
+export const useDeleteLevel = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            await axiosInstance.delete(`/academics/levels/${id}/`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["levels"] });
+            queryClient.invalidateQueries({ queryKey: ["programs"] });
+            toast.success("Level deleted successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to delete level");
         }
     });
 };
@@ -92,6 +160,41 @@ export const useCreateSection = () => {
     });
 };
 
+export const useUpdateSection = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ id, data }: { id: string; data: any }) => {
+            const response = await axiosInstance.patch(`/academics/sections/${id}/`, data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["sections"] });
+            queryClient.invalidateQueries({ queryKey: ["levels"] });
+            toast.success("Section updated successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to update section");
+        }
+    });
+};
+
+export const useDeleteSection = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            await axiosInstance.delete(`/academics/sections/${id}/`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["sections"] });
+            queryClient.invalidateQueries({ queryKey: ["levels"] });
+            toast.success("Section deleted successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to delete section");
+        }
+    });
+};
+
 // === SUBJECTS ===
 
 export const useSubjects = () => {
@@ -117,6 +220,39 @@ export const useCreateSubject = () => {
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.message || "Failed to create subject");
+        }
+    });
+};
+
+export const useUpdateSubject = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ id, data }: { id: string; data: any }) => {
+            const response = await axiosInstance.patch(`/academics/subjects/${id}/`, data);
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["subjects"] });
+            toast.success("Subject updated successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to update subject");
+        }
+    });
+};
+
+export const useDeleteSubject = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (id: string) => {
+            await axiosInstance.delete(`/academics/subjects/${id}/`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["subjects"] });
+            toast.success("Subject deleted successfully");
+        },
+        onError: (error: any) => {
+            toast.error(error.response?.data?.message || "Failed to delete subject");
         }
     });
 };

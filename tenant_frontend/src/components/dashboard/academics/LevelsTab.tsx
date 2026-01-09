@@ -1,18 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useAcademicLevels, useCreateLevel, usePrograms } from "@/hooks/useAcademics";
+import { useAcademicLevels, usePrograms, useCreateLevel, useUpdateLevel, useDeleteLevel } from "@/hooks/useAcademics";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus, MoreHorizontal, Pencil, Trash2, GraduationCap, LoaderCircle } from "lucide-react";
 import {
     Dialog,
     DialogContent,
+    DialogDescription,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
     Select,
     SelectContent,
@@ -28,111 +28,237 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { AcademicLevel } from "@/types/Academics";
 
 export default function LevelsTab() {
     const { data: levels, isLoading: isLoadingLevels } = useAcademicLevels();
-    const { data: programs } = usePrograms();
-    const { mutate: createLevel, isPending } = useCreateLevel();
+    const { data: programs, isLoading: isLoadingPrograms } = usePrograms();
+    const { mutate: createLevel, isPending: isCreating } = useCreateLevel();
+    const { mutate: updateLevel, isPending: isUpdating } = useUpdateLevel();
+    const { mutate: deleteLevel } = useDeleteLevel();
+
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [selectedProgram, setSelectedProgram] = useState("");
+    const [editingLevel, setEditingLevel] = useState<AcademicLevel | null>(null);
+    const [levelToDelete, setLevelToDelete] = useState<string | null>(null);
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
-
-        createLevel({
-            program: selectedProgram,
+        const data = {
+            program: formData.get("program"),
             name: formData.get("name"),
             order: parseInt(formData.get("order") as string),
-        }, {
-            onSuccess: () => {
-                setIsDialogOpen(false);
-                setSelectedProgram("");
-            }
-        });
+        };
+
+        if (editingLevel) {
+            updateLevel({ id: editingLevel.id, data }, {
+                onSuccess: () => {
+                    setIsDialogOpen(false);
+                    setEditingLevel(null);
+                }
+            });
+        } else {
+            createLevel(data, {
+                onSuccess: () => {
+                    setIsDialogOpen(false);
+                }
+            });
+        }
     };
 
-    if (isLoadingLevels) return <div>Loading...</div>;
+    const handleEdit = (level: AcademicLevel) => {
+        setEditingLevel(level);
+        setIsDialogOpen(true);
+    };
+
+    const handleDelete = () => {
+        if (levelToDelete) {
+            deleteLevel(levelToDelete);
+            setLevelToDelete(null);
+        }
+    };
+
+    const handleDialogClose = () => {
+        setIsDialogOpen(false);
+        setEditingLevel(null);
+    };
+
+    if (isLoadingLevels || isLoadingPrograms) {
+        return (
+            <div className="flex items-center justify-center py-20">
+                <LoaderCircle className="h-8 w-8 animate-spin text-indigo-600" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Academic Levels</h3>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="gap-2">
-                            <Plus className="h-4 w-4" />
-                            Add Level
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Add New Level</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>Program</Label>
-                                <Select value={selectedProgram} onValueChange={setSelectedProgram} required>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select Program" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {programs?.map((p) => (
-                                            <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Level Name</Label>
-                                <Input id="name" name="name" placeholder="e.g. Grade 10 or Semester 1" required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="order">Sort Order</Label>
-                                <Input id="order" name="order" type="number" defaultValue={1} required />
-                                <p className="text-xs text-muted-foreground">Used for sorting levels (1, 2, 3...)</p>
-                            </div>
-                            <div className="pt-4 flex justify-end">
-                                <Button type="submit" disabled={isPending || !selectedProgram}>
-                                    {isPending ? "Creating..." : "Create Level"}
-                                </Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                <div>
+                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Academic Levels</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage grades, years, or semesters within programs</p>
+                </div>
+                <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    New Level
+                </Button>
             </div>
 
-            <div className="border rounded-lg">
+            <Dialog open={isDialogOpen} onOpenChange={handleDialogClose}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>{editingLevel ? "Edit Academic Level" : "Create New Level"}</DialogTitle>
+                        <DialogDescription>
+                            {editingLevel ? "Update level information" : "Add a new academic level (grade/year/semester)"}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="program">Program</Label>
+                            <Select name="program" defaultValue={editingLevel?.program} required>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select program" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {programs?.map((program) => (
+                                        <SelectItem key={program.id} value={program.id}>
+                                            {program.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Level Name</Label>
+                            <Input
+                                id="name"
+                                name="name"
+                                placeholder="e.g., Grade 10, Semester 1"
+                                defaultValue={editingLevel?.name}
+                                required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="order">Order</Label>
+                            <Input
+                                id="order"
+                                name="order"
+                                type="number"
+                                placeholder="e.g., 1"
+                                defaultValue={editingLevel?.order}
+                                required
+                            />
+                            <p className="text-xs text-slate-500">Used for sorting (1, 2, 3...)</p>
+                        </div>
+                        <div className="pt-4 flex justify-end gap-2">
+                            <Button type="button" variant="outline" onClick={handleDialogClose}>
+                                Cancel
+                            </Button>
+                            <Button type="submit" disabled={isCreating || isUpdating}>
+                                {isCreating || isUpdating ? "Saving..." : editingLevel ? "Update" : "Create"}
+                            </Button>
+                        </div>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 overflow-hidden shadow-sm">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50">
                         <TableRow>
                             <TableHead>Level Name</TableHead>
                             <TableHead>Program</TableHead>
                             <TableHead>Order</TableHead>
                             <TableHead>Sections</TableHead>
-                            {/* <TableHead className="text-right">Actions</TableHead> */}
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {levels?.map((level) => (
-                            <TableRow key={level.id}>
-                                <TableCell className="font-medium">{level.name}</TableCell>
-                                <TableCell>{level.program_name}</TableCell>
-                                <TableCell>{level.order}</TableCell>
-                                <TableCell>{level.sections?.length || 0}</TableCell>
-                                {/* <TableCell className="text-right">...</TableCell> */}
-                            </TableRow>
-                        ))}
-                        {(!levels || levels.length === 0) && (
+                        {levels && levels.length > 0 ? (
+                            levels.map((level) => (
+                                <TableRow key={level.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                                    <TableCell className="font-medium">{level.name}</TableCell>
+                                    <TableCell className="text-slate-600 dark:text-slate-400">{level.program_name}</TableCell>
+                                    <TableCell>
+                                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-medium">
+                                            {level.order}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className="text-sm text-slate-600 dark:text-slate-400">
+                                            {level.sections?.length || 0}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={() => handleEdit(level)}>
+                                                    <Pencil className="h-4 w-4 mr-2" />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onClick={() => setLevelToDelete(level.id)}
+                                                    className="text-red-600"
+                                                >
+                                                    <Trash2 className="h-4 w-4 mr-2" />
+                                                    Delete
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                    No academic levels found.
+                                <TableCell colSpan={5} className="h-32 text-center">
+                                    <div className="flex flex-col items-center justify-center text-slate-400">
+                                        <GraduationCap className="h-12 w-12 mb-2 opacity-20" />
+                                        <p>No academic levels found. Create one to get started.</p>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
                 </Table>
             </div>
+
+            <AlertDialog open={!!levelToDelete} onOpenChange={() => setLevelToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This action cannot be undone. This will permanently delete the level and all its associated sections and subjects.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
